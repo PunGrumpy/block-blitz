@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import {
   Eye,
@@ -7,45 +7,51 @@ import {
   Settings2,
   Sparkles,
   Volume2,
-  VolumeX,
-} from 'lucide-react';
-import * as React from 'react';
+  VolumeX
+} from 'lucide-react'
+import * as React from 'react'
 
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
+  SheetTrigger
+} from '@/components/ui/sheet'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
 
 interface GameSettings {
   audio: {
-    enabled: boolean;
-    volume: number;
-    effects: boolean;
-    music: boolean;
-  };
+    enabled: boolean
+    volume: number
+    effects: boolean
+    music: boolean
+  }
   display: {
-    showGhost: boolean;
-    showGrid: boolean;
-    particles: boolean;
-  };
+    showGhost: boolean
+    showGrid: boolean
+    particles: boolean
+  }
 }
 
 interface GameSettingsProps {
-  settings: GameSettings;
-  onSettingsChange: (settings: GameSettings) => void;
+  settings: GameSettings
+  onSettingsChange: (settings: GameSettings) => void
 }
 
-export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) {
-  const updateSettings = <K extends keyof GameSettings, SK extends keyof GameSettings[K]>(
+export function GameSettings({
+  settings,
+  onSettingsChange
+}: GameSettingsProps) {
+  const updateSettings = <
+    K extends keyof GameSettings,
+    SK extends keyof GameSettings[K]
+  >(
     category: K,
     setting: SK,
     value: GameSettings[K][SK]
@@ -54,10 +60,10 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
       ...settings,
       [category]: {
         ...settings[category],
-        [setting]: value,
-      },
-    });
-  };
+        [setting]: value
+      }
+    })
+  }
 
   return (
     <Sheet>
@@ -69,16 +75,14 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Game Settings</SheetTitle>
-          <SheetDescription>
-            Customize your gaming experience
-          </SheetDescription>
+          <SheetDescription>Customize your gaming experience</SheetDescription>
         </SheetHeader>
 
-        <div className="py-6 space-y-6">
+        <div className="space-y-6 py-6">
           {/* Audio Settings */}
           <div className="space-y-4">
             <h4 className="text-sm font-medium">Audio Settings</h4>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {settings.audio.enabled ? (
@@ -91,7 +95,7 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
               <Switch
                 id="audio-toggle"
                 checked={settings.audio.enabled}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   updateSettings('audio', 'enabled', checked)
                 }
               />
@@ -119,7 +123,7 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
                 <Switch
                   id="effects-toggle"
                   checked={settings.audio.effects}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     updateSettings('audio', 'effects', checked)
                   }
                   disabled={!settings.audio.enabled}
@@ -131,7 +135,7 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
                 <Switch
                   id="music-toggle"
                   checked={settings.audio.music}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={checked =>
                     updateSettings('audio', 'music', checked)
                   }
                   disabled={!settings.audio.enabled}
@@ -158,7 +162,7 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
               <Switch
                 id="ghost-toggle"
                 checked={settings.display.showGhost}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   updateSettings('display', 'showGhost', checked)
                 }
               />
@@ -172,7 +176,7 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
               <Switch
                 id="grid-toggle"
                 checked={settings.display.showGrid}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   updateSettings('display', 'showGrid', checked)
                 }
               />
@@ -186,7 +190,7 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
               <Switch
                 id="particles-toggle"
                 checked={settings.display.particles}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   updateSettings('display', 'particles', checked)
                 }
               />
@@ -195,5 +199,5 @@ export function GameSettings({ settings, onSettingsChange }: GameSettingsProps) 
         </div>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

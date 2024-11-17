@@ -1,20 +1,20 @@
-'use client';
+'use client'
 
-import { Pause, Play, RefreshCw } from 'lucide-react';
-import * as React from 'react';
+import { Pause, Play, RefreshCw } from 'lucide-react'
+import * as React from 'react'
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import { GameState } from '@/types/game';
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { cn } from '@/lib/utils'
+import { GameState } from '@/types/game'
 
 interface GameStatusBarProps {
-  state: GameState;
-  targetScore: number;
-  onPause: () => void;
-  onReset: () => void;
-  className?: string;
+  state: GameState
+  targetScore: number
+  onPause: () => void
+  onReset: () => void
+  className?: string
 }
 
 export function GameStatusBar({
@@ -22,41 +22,46 @@ export function GameStatusBar({
   targetScore,
   onPause,
   onReset,
-  className,
+  className
 }: GameStatusBarProps) {
   // Calculate progress percentage
-  const progress = Math.min((state.score / targetScore) * 100, 100);
-  
+  const progress = Math.min((state.score / targetScore) * 100, 100)
+
   // Format time remaining
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.floor(seconds % 60)
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
 
   // Determine time warning state
-  const timeWarning = state.timeLeft <= 30 && !state.isPaused && !state.isGameOver;
+  const timeWarning =
+    state.timeLeft <= 30 && !state.isPaused && !state.isGameOver
 
   return (
     <div
       className={cn(
-        "bg-muted/50 backdrop-blur-sm rounded-lg p-4 shadow-lg",
+        'rounded-lg bg-muted/50 p-4 shadow-lg backdrop-blur-sm',
         className
       )}
     >
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
         {/* Score Section */}
         <div>
-          <div className="text-sm font-medium text-muted-foreground mb-1">Score</div>
+          <div className="mb-1 text-sm font-medium text-muted-foreground">
+            Score
+          </div>
           <div className="text-2xl font-bold tabular-nums">
             {state.score.toLocaleString()}
           </div>
-          <Progress value={progress} className="h-1 mt-2" />
+          <Progress value={progress} className="mt-2 h-1" />
         </div>
 
         {/* Level Section */}
         <div>
-          <div className="text-sm font-medium text-muted-foreground mb-1">Level</div>
+          <div className="mb-1 text-sm font-medium text-muted-foreground">
+            Level
+          </div>
           <div className="text-2xl font-bold">
             {state.level}
             <Badge variant="secondary" className="ml-2 text-xs">
@@ -67,17 +72,19 @@ export function GameStatusBar({
 
         {/* Time Section */}
         <div className="relative">
-          <div className="text-sm font-medium text-muted-foreground mb-1">Time</div>
-          <div 
+          <div className="mb-1 text-sm font-medium text-muted-foreground">
+            Time
+          </div>
+          <div
             className={cn(
-              "text-2xl font-bold tabular-nums transition-colors",
-              timeWarning && "text-red-500 animate-pulse"
+              'text-2xl font-bold tabular-nums transition-colors',
+              timeWarning && 'animate-pulse text-red-500'
             )}
           >
             {formatTime(state.timeLeft)}
           </div>
           {timeWarning && (
-            <div className="text-xs text-red-500 absolute -bottom-1">
+            <div className="absolute -bottom-1 text-xs text-red-500">
               Time running out!
             </div>
           )}
@@ -90,7 +97,7 @@ export function GameStatusBar({
             size="icon"
             onClick={onPause}
             disabled={state.isGameOver}
-            aria-label={state.isPaused ? "Resume game" : "Pause game"}
+            aria-label={state.isPaused ? 'Resume game' : 'Pause game'}
           >
             {state.isPaused ? (
               <Play className="size-4" />
@@ -112,7 +119,7 @@ export function GameStatusBar({
       {/* Game Status Messages */}
       {(state.isPaused || state.isGameOver) && (
         <div
-          className="text-center py-2 px-4 rounded-md bg-accent text-accent-foreground"
+          className="rounded-md bg-accent px-4 py-2 text-center text-accent-foreground"
           role="status"
           aria-live="polite"
         >
@@ -131,5 +138,5 @@ export function GameStatusBar({
         {`Time remaining: ${formatTime(state.timeLeft)}`}
       </div>
     </div>
-  );
+  )
 }

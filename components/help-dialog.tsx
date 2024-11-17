@@ -1,32 +1,33 @@
-'use client';
+'use client'
 
-import { 
+import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Keyboard, 
+  Keyboard,
   KeyRound,
-  Smartphone, 
+  Smartphone,
   Space,
-  Target, 
-  Trophy} from 'lucide-react';
+  Target,
+  Trophy
+} from 'lucide-react'
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface HelpDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
@@ -51,7 +52,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             <ScrollArea className="h-[300px] rounded-md border p-4">
               <div className="space-y-6">
                 <div>
-                  <h3 className="flex items-center gap-2 text-lg font-semibold mb-3">
+                  <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                     <Keyboard className="size-5" />
                     Keyboard Controls
                   </h3>
@@ -96,13 +97,13 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                 </div>
 
                 <div>
-                  <h3 className="flex items-center gap-2 text-lg font-semibold mb-3">
+                  <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                     <Smartphone className="size-5" />
                     Touch Controls
                   </h3>
                   <p className="text-muted-foreground">
-                    On mobile devices, use the on-screen buttons to control the game.
-                    Tap and hold movement buttons for continuous movement.
+                    On mobile devices, use the on-screen buttons to control the
+                    game. Tap and hold movement buttons for continuous movement.
                   </p>
                 </div>
               </div>
@@ -113,11 +114,11 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             <ScrollArea className="h-[300px] rounded-md border p-4">
               <div className="space-y-6">
                 <div>
-                  <h3 className="flex items-center gap-2 text-lg font-semibold mb-3">
+                  <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                     <Target className="size-5" />
                     Basic Rules
                   </h3>
-                  <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+                  <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
                     <li>Blocks fall from the top of the board</li>
                     <li>Complete lines to clear them and score points</li>
                     <li>Game ends if blocks reach the top</li>
@@ -127,14 +128,14 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                 </div>
 
                 <div>
-                  <h3 className="flex items-center gap-2 text-lg font-semibold mb-3">
+                  <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                     <Trophy className="size-5" />
                     Win Conditions
                   </h3>
                   <p className="text-muted-foreground">
                     Reach the target score before time runs out. The game gets
-                    faster as your level increases. Keep the board clear and plan
-                    your moves carefully!
+                    faster as your level increases. Keep the board clear and
+                    plan your moves carefully!
                   </p>
                 </div>
               </div>
@@ -145,7 +146,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             <ScrollArea className="h-[300px] rounded-md border p-4">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Point System</h3>
+                  <h3 className="mb-3 text-lg font-semibold">Point System</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Single Line</span>
@@ -165,18 +166,22 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                     </div>
                     <div className="flex justify-between">
                       <span>Soft Drop</span>
-                      <span className="text-muted-foreground">1 point per cell</span>
+                      <span className="text-muted-foreground">
+                        1 point per cell
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Hard Drop</span>
-                      <span className="text-muted-foreground">2 points per cell</span>
+                      <span className="text-muted-foreground">
+                        2 points per cell
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Level Bonuses</h3>
-                  <p className="text-muted-foreground mb-2">
+                  <h3 className="mb-3 text-lg font-semibold">Level Bonuses</h3>
+                  <p className="mb-2 text-muted-foreground">
                     All points are multiplied by current level number
                   </p>
                   <div className="space-y-2">
@@ -208,5 +213,5 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

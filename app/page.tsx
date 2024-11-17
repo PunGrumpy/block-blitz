@@ -1,17 +1,17 @@
-'use client';
+'use client'
 
-import * as React from 'react';
+import * as React from 'react'
 
-import { GameBoard } from '@/components/game-board';
-import { GameLayout } from '@/components/game-layout';
-import { GameSettings } from '@/components/game-settings';
-import { GameStatusBar } from '@/components/game-status-bar';
-import { HelpDialog } from '@/components/help-dialog';
-import { NextPiecePreview } from '@/components/next-piece-preview';
-import { TouchControls } from '@/components/touch-controls';
-import { useGameState } from '@/hooks/use-game-state';
-import { useKeyboard } from '@/hooks/use-keyboard';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { GameBoard } from '@/components/game-board'
+import { GameLayout } from '@/components/game-layout'
+import { GameSettings } from '@/components/game-settings'
+import { GameStatusBar } from '@/components/game-status-bar'
+import { HelpDialog } from '@/components/help-dialog'
+import { NextPiecePreview } from '@/components/next-piece-preview'
+import { TouchControls } from '@/components/touch-controls'
+import { useGameState } from '@/hooks/use-game-state'
+import { useKeyboard } from '@/hooks/use-keyboard'
+import { useMediaQuery } from '@/hooks/use-media-query'
 
 const GAME_CONFIG = {
   boardWidth: 10,
@@ -22,82 +22,82 @@ const GAME_CONFIG = {
   speedCurve: {
     initial: 800,
     decrement: 50,
-    minimum: 100,
-  },
-};
+    minimum: 100
+  }
+}
 
 export default function GamePage() {
-  const [isHelpOpen, setIsHelpOpen] = React.useState(false);
+  const [isHelpOpen, setIsHelpOpen] = React.useState(false)
   const [settings, setSettings] = React.useState({
     audio: {
       enabled: true,
       volume: 70,
       effects: true,
-      music: true,
+      music: true
     },
     display: {
       showGhost: true,
       showGrid: true,
-      particles: true,
-    },
-  });
+      particles: true
+    }
+  })
 
-  const { state, actions } = useGameState(GAME_CONFIG);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const { state, actions } = useGameState(GAME_CONFIG)
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   // Handle keyboard controls
   useKeyboard(actions, {
     repeatDelay: 200,
     repeatInterval: 50,
-    enabled: !state.isPaused && !state.isGameOver,
-  });
+    enabled: !state.isPaused && !state.isGameOver
+  })
 
   // Play sound effects
   React.useEffect(() => {
-    if (!settings.audio.enabled || !settings.audio.effects) return;
+    if (!settings.audio.enabled || !settings.audio.effects) return
 
-    const audioContext = new AudioContext();
-    
+    const audioContext = new AudioContext()
+
     function playTone(frequency: number, duration: number) {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = frequency;
-      gainNode.gain.value = settings.audio.volume / 100;
-      
-      oscillator.start();
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.value = frequency
+      gainNode.gain.value = settings.audio.volume / 100
+
+      oscillator.start()
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
         audioContext.currentTime + duration
-      );
-      
+      )
+
       setTimeout(() => {
-        oscillator.stop();
-        oscillator.disconnect();
-      }, duration * 1000);
+        oscillator.stop()
+        oscillator.disconnect()
+      }, duration * 1000)
     }
 
     return () => {
-      audioContext.close();
-    };
-  }, [settings.audio]);
+      audioContext.close()
+    }
+  }, [settings.audio])
 
   return (
     <GameLayout
       gameState={state}
-      onToggleSound={() => 
+      onToggleSound={() =>
         setSettings(prev => ({
           ...prev,
-          audio: { ...prev.audio, enabled: !prev.audio.enabled },
+          audio: { ...prev.audio, enabled: !prev.audio.enabled }
         }))
       }
       isSoundEnabled={settings.audio.enabled}
       onShowHelp={() => setIsHelpOpen(true)}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] gap-8 max-w-7xl mx-auto">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[1fr,auto]">
         {/* Main Game Area */}
         <div className="space-y-4">
           <GameStatusBar
@@ -117,15 +117,10 @@ export default function GamePage() {
         </div>
 
         {/* Side Panel */}
-        <div className="w-[300px] space-y-4 hidden lg:block">
-          <NextPiecePreview
-            piece={state.nextPiece}
-          />
+        <div className="hidden w-[300px] space-y-4 lg:block">
+          <NextPiecePreview piece={state.nextPiece} />
 
-          <GameSettings
-            settings={settings}
-            onSettingsChange={setSettings}
-          />
+          <GameSettings settings={settings} onSettingsChange={setSettings} />
         </div>
       </div>
 
@@ -142,10 +137,7 @@ export default function GamePage() {
       )}
 
       {/* Help Dialog */}
-      <HelpDialog
-        open={isHelpOpen}
-        onOpenChange={setIsHelpOpen}
-      />
+      <HelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
     </GameLayout>
-  );
+  )
 }
