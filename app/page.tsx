@@ -14,19 +14,7 @@ import { useGameState } from '@/hooks/use-game-state'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { GameOverDialog } from '@/components/game-over-dialog'
-
-const GAME_CONFIG = {
-  boardWidth: 10,
-  boardHeight: 20,
-  initialLevel: 1,
-  timeLimit: 180,
-  targetScore: 3000,
-  speedCurve: {
-    initial: 800,
-    decrement: 50,
-    minimum: 100
-  }
-}
+import { DEFAULT_CONFIG } from '@/constants/game'
 
 export default function GamePage() {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false)
@@ -43,7 +31,7 @@ export default function GamePage() {
     }
   })
 
-  const { state, actions } = useGameState(GAME_CONFIG)
+  const { state, actions } = useGameState(DEFAULT_CONFIG)
   const isMobile = useMediaQuery('(max-width: 768px)')
 
   const sounds = useGameSound({
@@ -157,7 +145,7 @@ export default function GamePage() {
         level={state.level}
         lines={state.lines}
         timeLeft={state.timeLeft}
-        targetScore={GAME_CONFIG.targetScore}
+        targetScore={DEFAULT_CONFIG.targetScore}
         onRestart={soundActions.reset}
       />
     </GameLayout>

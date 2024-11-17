@@ -94,43 +94,6 @@ export type GameAction =
   | { type: 'CLEAR_LINES'; count: number }
   | { type: 'GAME_OVER' }
 
-// Constants
-export const SCORING: ScoreSystem = {
-  singleLine: 100,
-  doubleLine: 300,
-  tripleLine: 500,
-  tetris: 800,
-  softDrop: 1,
-  hardDrop: 2,
-  combo: {
-    multiplier: 1.5,
-    timeWindow: 10000 // 10 seconds
-  }
-} as const
-
-export const DEFAULT_CONFIG: GameConfig = {
-  boardWidth: 10,
-  boardHeight: 20,
-  initialLevel: 1,
-  timeLimit: 180, // 3 minutes
-  targetScore: 3000,
-  speedCurve: {
-    initial: 800,
-    decrement: 50,
-    minimum: 100
-  }
-} as const
-
-// Game Events
-export interface GameEventMap {
-  'piece:lock': { piece: GamePiece; position: Position }
-  'lines:clear': { count: number; rows: number[] }
-  'score:update': { points: number; total: number }
-  'level:up': { level: number }
-  'game:over': { finalScore: number; reason: 'timeout' | 'topout' }
-  'combo:update': { combo: number; multiplier: number }
-}
-
 // Game Controls Config
 export interface ControlsConfig {
   repeatDelay: number // Initial delay before key repeat starts
@@ -153,37 +116,4 @@ export interface GameSettings {
     showGrid: boolean
     particles: boolean
   }
-}
-
-// High Score Entry
-export interface HighScoreEntry {
-  score: number
-  lines: number
-  level: number
-  date: string
-  duration: number
-}
-
-// Game Statistics for Analytics
-export interface GameMetrics {
-  piecesPlaced: number
-  rotationsUsed: number
-  hardDropsUsed: number
-  maxCombo: number
-  averageSpeed: number
-  totalPlayTime: number
-}
-
-// Utilities for type checking
-export function isValidPosition(pos: Position): boolean {
-  return typeof pos.x === 'number' && typeof pos.y === 'number'
-}
-
-export function isValidGamePiece(piece: GamePiece): boolean {
-  return (
-    Array.isArray(piece.shape) &&
-    typeof piece.color === 'string' &&
-    isValidPosition(piece.position) &&
-    typeof piece.rotation === 'number'
-  )
 }
