@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+
 import { Card } from '@/components/ui/card'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { LinesClearedEffect } from '@/lib/effects'
@@ -143,7 +144,7 @@ export function GameBoard({
         ref={canvasRef}
         width={state.board[0].length * cellSize}
         height={state.board.length * cellSize}
-        className="h-full w-full rounded-lg border border-border"
+        className="size-full rounded-lg border border-border"
         aria-label="Game Board"
         role="img"
       >

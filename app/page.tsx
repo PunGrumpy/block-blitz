@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+
 import { GameLayout } from '@/components/game-layout'
 import { DEFAULT_CONFIG } from '@/constants/game'
 

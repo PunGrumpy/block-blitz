@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+
 import { GamePiece } from '@/types/game'
 
 interface NextPiecePreviewProps {

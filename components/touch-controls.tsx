@@ -8,6 +8,7 @@ import {
   RotateCcw
 } from 'lucide-react'
 import * as React from 'react'
+
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -94,7 +95,7 @@ export function TouchControls({
           <Button
             variant="outline"
             size="lg"
-            className="h-16 w-16 rounded-lg border"
+            className="size-16 rounded-lg border"
             onTouchStart={() => handleTouchStart(onMoveLeft, 'left')}
             onTouchEnd={() => handleTouchEnd('left')}
             onTouchCancel={() => handleTouchEnd('left')}
@@ -106,7 +107,7 @@ export function TouchControls({
           <Button
             variant="outline"
             size="lg"
-            className="h-16 w-16 rounded-lg border"
+            className="size-16 rounded-lg border"
             onTouchStart={() => handleTouchStart(onMoveRight, 'right')}
             onTouchEnd={() => handleTouchEnd('right')}
             onTouchCancel={() => handleTouchEnd('right')}
@@ -121,7 +122,7 @@ export function TouchControls({
         <Button
           variant="default"
           size="lg"
-          className="h-16 w-16 rounded-lg"
+          className="size-16 rounded-lg"
           onClick={onHardDrop}
           disabled={disabled}
           aria-label="Hard drop"
@@ -134,7 +135,7 @@ export function TouchControls({
           <Button
             variant="outline"
             size="lg"
-            className="h-16 w-16 rounded-lg border"
+            className="size-16 rounded-lg border"
             onTouchStart={() => handleTouchStart(onMoveDown, 'down')}
             onTouchEnd={() => handleTouchEnd('down')}
             onTouchCancel={() => handleTouchEnd('down')}
@@ -146,7 +147,7 @@ export function TouchControls({
           <Button
             variant="outline"
             size="lg"
-            className="h-16 w-16 rounded-lg border"
+            className="size-16 rounded-lg border"
             onClick={onRotate}
             disabled={disabled}
             aria-label="Rotate piece"
