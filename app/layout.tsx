@@ -1,8 +1,10 @@
-import { cn } from '@/lib/utils'
 import './globals.css'
 
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
+
+import { ThemeProvider } from '@/components/theme-provider'
+import { cn } from '@/lib/utils'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -41,7 +43,14 @@ export default function RootLayout({
           'min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-background via-background to-muted'
         )}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
