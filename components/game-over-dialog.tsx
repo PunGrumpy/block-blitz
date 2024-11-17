@@ -82,21 +82,6 @@ export function GameOverDialog({
             <RotateCcw className="size-4" />
             Play Again
           </Button>
-          {/* <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={() =>
-              navigator
-                .share?.({
-                  title: 'Block Blitz Score',
-                  text: `I scored ${score} points in Block Blitz! Can you beat my score?`
-                })
-                .catch(() => {})
-            }
-          >
-            <Share2 className="size-4" />
-            Share Score
-          </Button> */}
         </div>
       </DialogContent>
     </Dialog>
