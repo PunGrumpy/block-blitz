@@ -9,34 +9,6 @@ import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
 
 // Animation variants
-const pieceVariants = {
-  initial: { opacity: 0, scale: 0.8 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 500,
-      damping: 30
-    }
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.8,
-    transition: { duration: 0.2 }
-  }
-}
-
-const ghostPieceVariants = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 0.2,
-    transition: {
-      duration: 0.2
-    }
-  }
-}
-
 const rowClearVariants = {
   initial: { scaleY: 1, opacity: 1 },
   animate: {
@@ -100,7 +72,7 @@ export function GameBoard({
 
       // Draw the grid if enabled
       if (showGrid) {
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
+        ctx.strokeStyle = 'bg-muted-foreground/20'
         ctx.lineWidth = 1
         for (let i = 0; i < board.length; i++) {
           for (let j = 0; j < board[i].length; j++) {
@@ -115,7 +87,7 @@ export function GameBoard({
           if (cell) {
             ctx.fillStyle = cell
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+            ctx.strokeStyle = 'bg-muted-foreground'
             ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize)
           }
         })
@@ -150,7 +122,7 @@ export function GameBoard({
               const pieceX = (currentPiece.position.x + x) * cellSize
               const pieceY = (currentPiece.position.y + y) * cellSize
               ctx.fillRect(pieceX, pieceY, cellSize, cellSize)
-              ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+              ctx.strokeStyle = 'bg-muted-foreground'
               ctx.strokeRect(pieceX, pieceY, cellSize, cellSize)
             }
           })
@@ -202,34 +174,6 @@ export function GameBoard({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <AnimatePresence>
-        {state.isPaused || state.isGameOver ? (
-          <motion.div
-            className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="text-center"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', duration: 0.5 }}
-            >
-              <h2 className="mb-2 text-3xl font-bold">
-                {state.isGameOver ? 'Game Over' : 'Paused'}
-              </h2>
-              <p className="text-muted-foreground">
-                {state.isGameOver
-                  ? `Final Score: ${state.score}`
-                  : 'Press P to resume'}
-              </p>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
       <canvas
         ref={canvasRef}
         width={state.board[0].length * cellSize}
@@ -245,7 +189,7 @@ export function GameBoard({
         {clearedRows.map(rowIndex => (
           <motion.div
             key={rowIndex}
-            className="absolute inset-x-0 bg-white/20"
+            className="absolute inset-x-0 bg-foreground/20"
             style={{
               top: rowIndex * cellSize,
               height: cellSize
