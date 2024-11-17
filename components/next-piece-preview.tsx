@@ -1,8 +1,6 @@
 'use client'
 
 import React from 'react'
-
-import { Card } from '@/components/ui/card'
 import { GamePiece } from '@/types/game'
 
 interface NextPiecePreviewProps {
@@ -12,7 +10,7 @@ interface NextPiecePreviewProps {
 
 export function NextPiecePreview({
   piece,
-  cellSize = 25
+  cellSize = 30
 }: NextPiecePreviewProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
 
@@ -32,19 +30,21 @@ export function NextPiecePreview({
     const offsetX = (canvas.width - pieceWidth) / 2
     const offsetY = (canvas.height - pieceHeight) / 2
 
-    // Draw piece
+    // Draw piece with minimal style
     ctx.fillStyle = piece.color
     piece.shape.forEach((row, y) => {
       row.forEach((isSet, x) => {
         if (isSet) {
+          // Draw block
           ctx.fillRect(
             offsetX + x * cellSize,
             offsetY + y * cellSize,
             cellSize,
             cellSize
           )
-          // Draw border
-          ctx.strokeStyle = '#ffffff33'
+
+          // Add subtle border
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
           ctx.strokeRect(
             offsetX + x * cellSize,
             offsetY + y * cellSize,
@@ -57,14 +57,12 @@ export function NextPiecePreview({
   }, [piece, cellSize])
 
   return (
-    <Card className="p-4">
-      <div className="mb-2 text-sm text-muted-foreground">Next Piece</div>
-      <canvas
-        ref={canvasRef}
-        width={6 * cellSize}
-        height={6 * cellSize}
-        className="border border-border bg-background"
-      />
-    </Card>
+    <canvas
+      ref={canvasRef}
+      width={6 * cellSize}
+      height={6 * cellSize}
+      className="h-56 w-full rounded-lg border border-border bg-background"
+      aria-label="Next piece preview"
+    />
   )
 }

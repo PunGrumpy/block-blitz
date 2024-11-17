@@ -1,7 +1,5 @@
 import { Metadata } from 'next'
 import { GameLayout } from '@/components/game-layout'
-import { SiteHeader } from '@/components/site-header'
-import { SiteFooter } from '@/components/site-footer'
 import { DEFAULT_CONFIG } from '@/constants/game'
 
 export const metadata: Metadata = {
@@ -18,12 +16,8 @@ export const metadata: Metadata = {
 
 export default function GamePage() {
   return (
-    <div className="relative flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1">
-        <GameLayout config={DEFAULT_CONFIG} />
-      </main>
-      <SiteFooter />
+    <div className="h-screen w-screen overflow-hidden">
+      <GameLayout config={DEFAULT_CONFIG} />
     </div>
   )
 }

@@ -8,7 +8,6 @@ import {
   RotateCcw
 } from 'lucide-react'
 import * as React from 'react'
-
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -31,7 +30,6 @@ export function TouchControls({
   className,
   disabled = false
 }: TouchControlsProps) {
-  // Use refs for mutable state
   const buttonStates = React.useRef<Map<string, boolean>>(new Map())
   const intervalRefs = React.useRef<Map<string, number>>(new Map())
 
@@ -51,7 +49,6 @@ export function TouchControls({
   }, [])
 
   React.useEffect(() => {
-    // Cleanup function now uses the callback ref that won't change
     return () => {
       clearAllIntervals()
     }
@@ -61,14 +58,10 @@ export function TouchControls({
     (action: () => void, key: string) => {
       if (disabled) return
 
-      // Clear any existing interval
       clearInterval(key)
-
-      // Set initial state and perform action
       buttonStates.current.set(key, true)
       action()
 
-      // Start new interval
       const intervalId = window.setInterval(() => {
         if (buttonStates.current.get(key)) {
           action()
@@ -91,17 +84,17 @@ export function TouchControls({
   return (
     <div
       className={cn(
-        'fixed inset-x-0 bottom-0 bg-gradient-to-t from-background to-transparent p-4 md:hidden',
+        'fixed inset-x-0 bottom-0 bg-background/80 backdrop-blur-sm md:hidden',
         className
       )}
     >
-      <div className="container mx-auto flex items-center justify-between gap-4">
-        {/* Movement controls group */}
-        <div className="flex gap-2">
+      <div className="container flex h-[20vh] items-center justify-between gap-4 p-4">
+        {/* Movement controls */}
+        <div className="flex gap-4">
           <Button
             variant="outline"
             size="lg"
-            className="size-16 rounded-full border-2"
+            className="h-16 w-16 rounded-lg border"
             onTouchStart={() => handleTouchStart(onMoveLeft, 'left')}
             onTouchEnd={() => handleTouchEnd('left')}
             onTouchCancel={() => handleTouchEnd('left')}
@@ -113,7 +106,7 @@ export function TouchControls({
           <Button
             variant="outline"
             size="lg"
-            className="size-16 rounded-full border-2"
+            className="h-16 w-16 rounded-lg border"
             onTouchStart={() => handleTouchStart(onMoveRight, 'right')}
             onTouchEnd={() => handleTouchEnd('right')}
             onTouchCancel={() => handleTouchEnd('right')}
@@ -128,7 +121,7 @@ export function TouchControls({
         <Button
           variant="default"
           size="lg"
-          className="size-16 rounded-full"
+          className="h-16 w-16 rounded-lg"
           onClick={onHardDrop}
           disabled={disabled}
           aria-label="Hard drop"
@@ -136,12 +129,12 @@ export function TouchControls({
           <ChevronDown className="size-8" />
         </Button>
 
-        {/* Action controls group */}
-        <div className="flex gap-2">
+        {/* Action controls */}
+        <div className="flex gap-4">
           <Button
             variant="outline"
             size="lg"
-            className="size-16 rounded-full border-2"
+            className="h-16 w-16 rounded-lg border"
             onTouchStart={() => handleTouchStart(onMoveDown, 'down')}
             onTouchEnd={() => handleTouchEnd('down')}
             onTouchCancel={() => handleTouchEnd('down')}
@@ -153,7 +146,7 @@ export function TouchControls({
           <Button
             variant="outline"
             size="lg"
-            className="size-16 rounded-full border-2"
+            className="h-16 w-16 rounded-lg border"
             onClick={onRotate}
             disabled={disabled}
             aria-label="Rotate piece"
@@ -161,12 +154,6 @@ export function TouchControls({
             <RotateCcw className="size-8" />
           </Button>
         </div>
-      </div>
-
-      {/* Haptic feedback for screen readers */}
-      <div className="sr-only" aria-live="polite">
-        Game controls available. Use on-screen buttons to move and rotate
-        pieces.
       </div>
     </div>
   )
