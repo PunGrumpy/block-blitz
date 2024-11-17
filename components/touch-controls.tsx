@@ -1,24 +1,25 @@
-'use client';
+'use client'
 
-import { 
-  ArrowDown, 
-  ArrowLeft, 
-  ArrowRight, 
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
   ChevronDown,
-  RotateCcw} from 'lucide-react';
-import * as React from 'react';
+  RotateCcw
+} from 'lucide-react'
+import * as React from 'react'
 
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface TouchControlsProps {
-  onMoveLeft: () => void;
-  onMoveRight: () => void;
-  onMoveDown: () => void;
-  onRotate: () => void;
-  onHardDrop: () => void;
-  className?: string;
-  disabled?: boolean;
+  onMoveLeft: () => void
+  onMoveRight: () => void
+  onMoveDown: () => void
+  onRotate: () => void
+  onHardDrop: () => void
+  className?: string
+  disabled?: boolean
 }
 
 export function TouchControls({
@@ -28,44 +29,73 @@ export function TouchControls({
   onRotate,
   onHardDrop,
   className,
-  disabled = false,
+  disabled = false
 }: TouchControlsProps) {
-  // Handle touch events with proper timing
-  const buttonStates = React.useRef<{ [key: string]: boolean }>({});
-  const intervalRefs = React.useRef<{ [key: string]: NodeJS.Timeout }>({});
+  // Use refs for mutable state
+  const buttonStates = React.useRef<Map<string, boolean>>(new Map())
+  const intervalRefs = React.useRef<Map<string, number>>(new Map())
 
-  const handleTouchStart = React.useCallback((action: () => void, key: string) => {
-    if (disabled) return;
-    
-    buttonStates.current[key] = true;
-    action();
-
-    // Start repeating action after initial delay
-    intervalRefs.current[key] = setInterval(() => {
-      if (buttonStates.current[key]) {
-        action();
-      }
-    }, 100); // Repeat interval
-  }, [disabled]);
-
-  const handleTouchEnd = React.useCallback((key: string) => {
-    buttonStates.current[key] = false;
-    if (intervalRefs.current[key]) {
-      clearInterval(intervalRefs.current[key]);
-      delete intervalRefs.current[key];
+  const clearInterval = React.useCallback((key: string) => {
+    const intervalId = intervalRefs.current.get(key)
+    if (intervalId !== undefined) {
+      window.clearInterval(intervalId)
+      intervalRefs.current.delete(key)
     }
-  }, []);
+  }, [])
 
-  // Cleanup intervals on unmount
+  const clearAllIntervals = React.useCallback(() => {
+    intervalRefs.current.forEach(intervalId => {
+      window.clearInterval(intervalId)
+    })
+    intervalRefs.current.clear()
+  }, [])
+
   React.useEffect(() => {
+    // Cleanup function now uses the callback ref that won't change
     return () => {
-      Object.values(intervalRefs.current).forEach(clearInterval);
-    };
-  }, []);
+      clearAllIntervals()
+    }
+  }, [clearAllIntervals])
+
+  const handleTouchStart = React.useCallback(
+    (action: () => void, key: string) => {
+      if (disabled) return
+
+      // Clear any existing interval
+      clearInterval(key)
+
+      // Set initial state and perform action
+      buttonStates.current.set(key, true)
+      action()
+
+      // Start new interval
+      const intervalId = window.setInterval(() => {
+        if (buttonStates.current.get(key)) {
+          action()
+        }
+      }, 100)
+
+      intervalRefs.current.set(key, intervalId)
+    },
+    [disabled, clearInterval]
+  )
+
+  const handleTouchEnd = React.useCallback(
+    (key: string) => {
+      buttonStates.current.set(key, false)
+      clearInterval(key)
+    },
+    [clearInterval]
+  )
 
   return (
-    <div className={cn("fixed bottom-0 inset-x-0 p-4 bg-gradient-to-t from-background to-transparent md:hidden", className)}>
-      <div className="container mx-auto flex justify-between items-center gap-4">
+    <div
+      className={cn(
+        'fixed inset-x-0 bottom-0 bg-gradient-to-t from-background to-transparent p-4 md:hidden',
+        className
+      )}
+    >
+      <div className="container mx-auto flex items-center justify-between gap-4">
         {/* Movement controls group */}
         <div className="flex gap-2">
           <Button
@@ -74,6 +104,7 @@ export function TouchControls({
             className="size-16 rounded-full border-2"
             onTouchStart={() => handleTouchStart(onMoveLeft, 'left')}
             onTouchEnd={() => handleTouchEnd('left')}
+            onTouchCancel={() => handleTouchEnd('left')}
             disabled={disabled}
             aria-label="Move left"
           >
@@ -85,6 +116,7 @@ export function TouchControls({
             className="size-16 rounded-full border-2"
             onTouchStart={() => handleTouchStart(onMoveRight, 'right')}
             onTouchEnd={() => handleTouchEnd('right')}
+            onTouchCancel={() => handleTouchEnd('right')}
             disabled={disabled}
             aria-label="Move right"
           >
@@ -112,6 +144,7 @@ export function TouchControls({
             className="size-16 rounded-full border-2"
             onTouchStart={() => handleTouchStart(onMoveDown, 'down')}
             onTouchEnd={() => handleTouchEnd('down')}
+            onTouchCancel={() => handleTouchEnd('down')}
             disabled={disabled}
             aria-label="Move down"
           >
@@ -132,8 +165,9 @@ export function TouchControls({
 
       {/* Haptic feedback for screen readers */}
       <div className="sr-only" aria-live="polite">
-        Game controls available. Use on-screen buttons to move and rotate pieces.
+        Game controls available. Use on-screen buttons to move and rotate
+        pieces.
       </div>
     </div>
-  );
+  )
 }
