@@ -4,6 +4,7 @@ import * as React from 'react'
 
 import { GameBoard } from '@/components/game-board'
 import { GameLayout } from '@/components/game-layout'
+import { GamePauseDialog } from '@/components/game-pause-dialog'
 import { GameSettings } from '@/components/game-settings'
 import { GameStatusBar } from '@/components/game-status-bar'
 import { HelpDialog } from '@/components/help-dialog'
@@ -45,45 +46,12 @@ export default function GamePage() {
   const { state, actions } = useGameState(GAME_CONFIG)
   const isMobile = useMediaQuery('(max-width: 768px)')
 
-  // Handle keyboard controls
+  // Handle keyboard controls - allow pause key even when paused
   useKeyboard(actions, {
     repeatDelay: 200,
     repeatInterval: 50,
-    enabled: !state.isPaused && !state.isGameOver
+    enabled: !state.isGameOver
   })
-
-  // Play sound effects
-  React.useEffect(() => {
-    if (!settings.audio.enabled || !settings.audio.effects) return
-
-    const audioContext = new AudioContext()
-
-    function playTone(frequency: number, duration: number) {
-      const oscillator = audioContext.createOscillator()
-      const gainNode = audioContext.createGain()
-
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContext.destination)
-
-      oscillator.frequency.value = frequency
-      gainNode.gain.value = settings.audio.volume / 100
-
-      oscillator.start()
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.01,
-        audioContext.currentTime + duration
-      )
-
-      setTimeout(() => {
-        oscillator.stop()
-        oscillator.disconnect()
-      }, duration * 1000)
-    }
-
-    return () => {
-      audioContext.close()
-    }
-  }, [settings.audio])
 
   return (
     <GameLayout
@@ -98,7 +66,6 @@ export default function GamePage() {
       onShowHelp={() => setIsHelpOpen(true)}
     >
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[1fr,auto]">
-        {/* Main Game Area */}
         <div className="space-y-4">
           <GameStatusBar
             state={state}
@@ -116,15 +83,12 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* Side Panel */}
         <div className="hidden w-[300px] space-y-4 lg:block">
           <NextPiecePreview piece={state.nextPiece} />
-
           <GameSettings settings={settings} onSettingsChange={setSettings} />
         </div>
       </div>
 
-      {/* Mobile Touch Controls */}
       {isMobile && (
         <TouchControls
           onMoveLeft={actions.moveLeft}
@@ -136,8 +100,14 @@ export default function GamePage() {
         />
       )}
 
-      {/* Help Dialog */}
       <HelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+
+      {/* Pause Dialog */}
+      <GamePauseDialog
+        isOpen={state.isPaused && !state.isGameOver}
+        onResume={actions.togglePause}
+        onRestart={actions.reset}
+      />
     </GameLayout>
   )
 }

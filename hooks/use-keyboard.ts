@@ -9,11 +9,7 @@ interface GameControls {
   togglePause: () => void
 }
 
-type KeyMap = {
-  [key: string]: keyof GameControls
-}
-
-const KEYMAP: KeyMap = {
+const KEYMAP: Record<string, keyof GameControls> = {
   Space: 'hardDrop',
   ArrowLeft: 'moveLeft',
   ArrowRight: 'moveRight',
@@ -32,90 +28,67 @@ const REPEATABLE_ACTIONS = new Set(['moveLeft', 'moveRight', 'moveDown'])
 export function useKeyboard(
   controls: GameControls,
   options = {
-    repeatDelay: 200, // Initial delay before repeating
-    repeatInterval: 50, // Interval between repeats
-    enabled: true // Whether keyboard controls are enabled
+    repeatDelay: 200,
+    repeatInterval: 50,
+    enabled: true
   }
 ) {
-  // Keep track of currently pressed keys
   const pressedKeys = useRef(new Set<string>())
   const repeatTimeouts = useRef(new Map<string, NodeJS.Timeout>())
-
-  // Store controls in ref to avoid unnecessary effect triggers
   const controlsRef = useRef(controls)
   controlsRef.current = controls
 
-  const clearRepeats = useCallback((key?: string) => {
-    if (key) {
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      const key = event.code
+      const action = KEYMAP[key]
+
+      // Always allow pause action, regardless of enabled state
+      if (action === 'togglePause' || (options.enabled && action)) {
+        event.preventDefault()
+
+        if (!pressedKeys.current.has(key)) {
+          pressedKeys.current.add(key)
+          controlsRef.current[action]()
+
+          // Only start repeat for repeatable actions
+          if (REPEATABLE_ACTIONS.has(action) && options.enabled) {
+            const timeout = setTimeout(() => {
+              const interval = setInterval(() => {
+                if (pressedKeys.current.has(key)) {
+                  controlsRef.current[action]()
+                }
+              }, options.repeatInterval)
+              repeatTimeouts.current.set(
+                key,
+                interval as unknown as NodeJS.Timeout
+              )
+            }, options.repeatDelay)
+            repeatTimeouts.current.set(key, timeout)
+          }
+        }
+      }
+    },
+    [options.enabled, options.repeatDelay, options.repeatInterval]
+  )
+
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    const key = event.code
+    if (KEYMAP[key]) {
+      pressedKeys.current.delete(key)
       const timeout = repeatTimeouts.current.get(key)
       if (timeout) {
         clearTimeout(timeout)
         repeatTimeouts.current.delete(key)
       }
-    } else {
-      repeatTimeouts.current.forEach(clearTimeout)
-      repeatTimeouts.current.clear()
     }
   }, [])
 
-  const startRepeat = useCallback(
-    (key: string, action: keyof GameControls) => {
-      if (!REPEATABLE_ACTIONS.has(action)) return
-
-      const createTimeout = () => {
-        return setTimeout(
-          () => {
-            if (pressedKeys.current.has(key)) {
-              controlsRef.current[action]()
-              const newTimeout = createTimeout()
-              repeatTimeouts.current.set(key, newTimeout)
-            }
-          },
-          repeatTimeouts.current.size === 0
-            ? options.repeatDelay
-            : options.repeatInterval
-        )
-      }
-
-      const timeout = createTimeout()
-      repeatTimeouts.current.set(key, timeout)
-    },
-    [options.repeatDelay, options.repeatInterval]
-  )
-
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (!options.enabled) return
-
-      const key = event.code
-      const action = KEYMAP[key]
-
-      if (action && !pressedKeys.current.has(key)) {
-        event.preventDefault()
-        pressedKeys.current.add(key)
-        controlsRef.current[action]()
-        startRepeat(key, action)
-      }
-    },
-    [options.enabled, startRepeat]
-  )
-
-  const handleKeyUp = useCallback(
-    (event: KeyboardEvent) => {
-      const key = event.code
-      if (KEYMAP[key]) {
-        pressedKeys.current.delete(key)
-        clearRepeats(key)
-      }
-    },
-    [clearRepeats]
-  )
-
-  // Handle window blur to clear all pressed keys
   const handleBlur = useCallback(() => {
     pressedKeys.current.clear()
-    clearRepeats()
-  }, [clearRepeats])
+    repeatTimeouts.current.forEach(clearTimeout)
+    repeatTimeouts.current.clear()
+  }, [])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -126,15 +99,14 @@ export function useKeyboard(
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', handleBlur)
-      clearRepeats()
+      handleBlur()
     }
-  }, [handleKeyDown, handleKeyUp, handleBlur, clearRepeats])
+  }, [handleKeyDown, handleKeyUp, handleBlur])
 
-  // Cleanup on unmount or when enabled changes
+  // Cleanup when disabled
   useEffect(() => {
     if (!options.enabled) {
-      pressedKeys.current.clear()
-      clearRepeats()
+      handleBlur()
     }
-  }, [options.enabled, clearRepeats])
+  }, [options.enabled, handleBlur])
 }
