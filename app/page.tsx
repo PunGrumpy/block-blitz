@@ -6,10 +6,10 @@ import { GameBoard } from '@/components/game-board'
 import { GameLayout } from '@/components/game-layout'
 import { GamePauseDialog } from '@/components/game-pause-dialog'
 import { GameSettings } from '@/components/game-settings'
-import { GameStatusBar } from '@/components/game-status-bar'
 import { HelpDialog } from '@/components/help-dialog'
 import { NextPiecePreview } from '@/components/next-piece-preview'
 import { TouchControls } from '@/components/touch-controls'
+import { useGameSound } from '@/hooks/use-game-sound'
 import { useGameState } from '@/hooks/use-game-state'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
@@ -18,7 +18,7 @@ const GAME_CONFIG = {
   boardWidth: 10,
   boardHeight: 20,
   initialLevel: 1,
-  timeLimit: 180, // 3 minutes
+  timeLimit: 180,
   targetScore: 3000,
   speedCurve: {
     initial: 800,
@@ -46,8 +46,55 @@ export default function GamePage() {
   const { state, actions } = useGameState(GAME_CONFIG)
   const isMobile = useMediaQuery('(max-width: 768px)')
 
-  // Handle keyboard controls - allow pause key even when paused
-  useKeyboard(actions, {
+  const sounds = useGameSound({
+    enabled: settings.audio.enabled,
+    volume: settings.audio.volume,
+    effects: settings.audio.effects
+  })
+
+  // Create wrapped actions that play sounds
+  const soundActions = {
+    moveLeft: React.useCallback(() => {
+      sounds.playMove()
+      actions.moveLeft()
+    }, [actions, sounds]),
+    moveRight: React.useCallback(() => {
+      sounds.playMove()
+      actions.moveRight()
+    }, [actions, sounds]),
+    moveDown: React.useCallback(() => {
+      sounds.playMove()
+      actions.moveDown()
+    }, [actions, sounds]),
+    rotate: React.useCallback(() => {
+      sounds.playRotate()
+      actions.rotate()
+    }, [actions, sounds]),
+    hardDrop: React.useCallback(() => {
+      sounds.playDrop()
+      actions.hardDrop()
+    }, [actions, sounds]),
+    togglePause: actions.togglePause,
+    reset: actions.reset
+  }
+
+  // Play sound when lines are cleared
+  const prevLines = React.useRef(state.lines)
+  React.useEffect(() => {
+    if (state.lines > prevLines.current) {
+      sounds.playClear()
+    }
+    prevLines.current = state.lines
+  }, [state.lines, sounds])
+
+  // Play game over sound
+  React.useEffect(() => {
+    if (state.isGameOver) {
+      sounds.playGameOver()
+    }
+  }, [state.isGameOver, sounds])
+
+  useKeyboard(soundActions, {
     repeatDelay: 200,
     repeatInterval: 50,
     enabled: !state.isGameOver
@@ -65,48 +112,42 @@ export default function GamePage() {
       isSoundEnabled={settings.audio.enabled}
       onShowHelp={() => setIsHelpOpen(true)}
     >
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[1fr,auto]">
-        <div className="space-y-4">
-          <GameStatusBar
+      <div className="grid h-full grid-cols-[1fr,auto] gap-4 p-2">
+        {/* Game Board Area */}
+        <div className="flex items-center justify-center">
+          <GameBoard
             state={state}
-            targetScore={GAME_CONFIG.targetScore}
-            onPause={actions.togglePause}
-            onReset={actions.reset}
+            showGhost={settings.display.showGhost}
+            className="max-h-full"
           />
-
-          <div className="flex justify-center">
-            <GameBoard
-              state={state}
-              showGhost={settings.display.showGhost}
-              className="max-w-full"
-            />
-          </div>
         </div>
 
-        <div className="hidden w-[300px] space-y-4 lg:block">
+        {/* Side Panel */}
+        <div className="hidden w-48 space-y-2 lg:block">
           <NextPiecePreview piece={state.nextPiece} />
           <GameSettings settings={settings} onSettingsChange={setSettings} />
         </div>
       </div>
 
+      {/* Mobile Controls */}
       {isMobile && (
         <TouchControls
-          onMoveLeft={actions.moveLeft}
-          onMoveRight={actions.moveRight}
-          onMoveDown={actions.moveDown}
-          onRotate={actions.rotate}
-          onHardDrop={actions.hardDrop}
+          onMoveLeft={soundActions.moveLeft}
+          onMoveRight={soundActions.moveRight}
+          onMoveDown={soundActions.moveDown}
+          onRotate={soundActions.rotate}
+          onHardDrop={soundActions.hardDrop}
           disabled={state.isPaused || state.isGameOver}
+          className="absolute bottom-16"
         />
       )}
 
+      {/* Dialogs */}
       <HelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
-
-      {/* Pause Dialog */}
       <GamePauseDialog
         isOpen={state.isPaused && !state.isGameOver}
-        onResume={actions.togglePause}
-        onRestart={actions.reset}
+        onResume={soundActions.togglePause}
+        onRestart={soundActions.reset}
       />
     </GameLayout>
   )

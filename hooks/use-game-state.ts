@@ -6,14 +6,14 @@ import {
   Position,
   GamePiece
 } from '@/types/game'
-import { getRandomPiece, rotatePiece } from '../lib/pieces'
+import { getRandomPiece, rotatePiece } from '@/lib/pieces'
 import {
   hasCollision,
   mergePieceToBoard,
   findFullRows,
   clearRows,
   isGameOver
-} from '../lib/collision'
+} from '@/lib/collision'
 
 const INITIAL_STATE: GameState = {
   board: Array(20)
