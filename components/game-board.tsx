@@ -40,6 +40,8 @@ export function GameBoard({
 }: GameBoardProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const effectsRef = React.useRef<LinesClearedEffect>(new LinesClearedEffect())
+  const prevLinesRef = React.useRef(state.lines)
+  const boardLengthRef = React.useRef(state.board.length)
   const [isMounted, setIsMounted] = React.useState(false)
   const [clearedRows, setClearedRows] = React.useState<number[]>([])
 
@@ -162,6 +164,25 @@ export function GameBoard({
       setTimeout(() => setClearedRows([]), 300) // Clear after animation
     }
   }, [state.board])
+
+  // Check for cleared lines and create particles
+  React.useEffect(() => {
+    if (showParticles && state.lines > prevLinesRef.current) {
+      const linesCleared = state.lines - prevLinesRef.current
+      const canvasWidth = canvasRef.current?.width || 0
+      boardLengthRef.current = state.board.length
+
+      // Create particles for each cleared line
+      for (let i = 0; i < linesCleared; i++) {
+        effectsRef.current.createParticles(
+          boardLengthRef.current - 1 - i,
+          cellSize,
+          canvasWidth
+        )
+      }
+    }
+    prevLinesRef.current = state.lines
+  }, [state.lines, showParticles, cellSize, state.board.length])
 
   if (!isMounted) {
     return null
