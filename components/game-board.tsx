@@ -1,11 +1,12 @@
 'use client'
 
 import React from 'react'
+
 import { Card } from '@/components/ui/card'
 import { useGameLoop } from '@/hooks/use-game-loop'
+import { LinesClearedEffect } from '@/lib/effects'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
-import { LinesClearedEffect } from '@/lib/effects'
 
 interface GameBoardProps {
   state: GameState
@@ -28,6 +29,7 @@ export function GameBoard({
   const effectsRef = React.useRef<LinesClearedEffect>(new LinesClearedEffect())
   const [isMounted, setIsMounted] = React.useState(false)
   const prevLinesRef = React.useRef(state.lines)
+  const boardLengthRef = React.useRef(state.board.length)
 
   // Find ghost piece position
   const getGhostPosition = React.useCallback(
@@ -147,18 +149,19 @@ export function GameBoard({
     if (showParticles && state.lines > prevLinesRef.current) {
       const linesCleared = state.lines - prevLinesRef.current
       const canvasWidth = canvasRef.current?.width || 0
+      boardLengthRef.current = state.board.length
 
       // Create particles for each cleared line
       for (let i = 0; i < linesCleared; i++) {
         effectsRef.current.createParticles(
-          state.board.length - 1 - i,
+          boardLengthRef.current - 1 - i,
           cellSize,
           canvasWidth
         )
       }
     }
     prevLinesRef.current = state.lines
-  }, [state.lines, showParticles, cellSize])
+  }, [state.lines, showParticles, cellSize, state.board.length])
 
   useGameLoop(canvasRef, drawBoard)
 
