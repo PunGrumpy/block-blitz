@@ -24,6 +24,7 @@ interface GameLayoutProps {
 
 export function GameLayout({ config }: GameLayoutProps) {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
   const [settings, setSettings] = React.useState({
     audio: {
       enabled: true,
@@ -47,33 +48,67 @@ export function GameLayout({ config }: GameLayoutProps) {
     effects: settings.audio.effects
   })
 
+  // Auto-pause when any dialog is open
+  React.useEffect(() => {
+    const shouldPause = isHelpOpen || isSettingsOpen
+    if (shouldPause && !state.isPaused && !state.isGameOver) {
+      actions.togglePause()
+    }
+  }, [isHelpOpen, isSettingsOpen, state.isPaused, state.isGameOver, actions])
+
   // Create wrapped actions that play sounds
   const gameActions = React.useMemo(
     () => ({
       moveLeft: () => {
-        sounds.playMove()
-        actions.moveLeft()
+        if (!state.isPaused && !state.isGameOver) {
+          sounds.playMove()
+          actions.moveLeft()
+        }
       },
       moveRight: () => {
-        sounds.playMove()
-        actions.moveRight()
+        if (!state.isPaused && !state.isGameOver) {
+          sounds.playMove()
+          actions.moveRight()
+        }
       },
       moveDown: () => {
-        sounds.playMove()
-        actions.moveDown()
+        if (!state.isPaused && !state.isGameOver) {
+          sounds.playMove()
+          actions.moveDown()
+        }
       },
       rotate: () => {
-        sounds.playRotate()
-        actions.rotate()
+        if (!state.isPaused && !state.isGameOver) {
+          sounds.playRotate()
+          actions.rotate()
+        }
       },
       hardDrop: () => {
-        sounds.playDrop()
-        actions.hardDrop()
+        if (!state.isPaused && !state.isGameOver) {
+          sounds.playDrop()
+          actions.hardDrop()
+        }
       },
-      togglePause: actions.togglePause,
-      reset: actions.reset
+      togglePause: () => {
+        // Only allow pause toggle if no dialogs are open
+        if (!isHelpOpen && !isSettingsOpen && !state.isGameOver) {
+          actions.togglePause()
+        }
+      },
+      reset: () => {
+        actions.reset()
+        setIsHelpOpen(false)
+        setIsSettingsOpen(false)
+      }
     }),
-    [actions, sounds]
+    [
+      actions,
+      sounds,
+      state.isPaused,
+      state.isGameOver,
+      isHelpOpen,
+      isSettingsOpen
+    ]
   )
 
   // Handle sounds for game events
@@ -90,11 +125,18 @@ export function GameLayout({ config }: GameLayoutProps) {
     }
   }, [state.isGameOver, sounds])
 
+  // Only enable keyboard controls when no dialogs are open
+  const keyboardEnabled = !isHelpOpen && !isSettingsOpen && !state.isGameOver
+
   useKeyboard(gameActions, {
     repeatDelay: 200,
     repeatInterval: 50,
-    enabled: !state.isGameOver && !state.isPaused
+    enabled: keyboardEnabled
   })
+
+  const handleSettingsOpen = React.useCallback((open: boolean) => {
+    setIsSettingsOpen(open)
+  }, [])
 
   return (
     <div className="mx-auto flex max-w-screen-xl flex-col overflow-hidden bg-background text-foreground">
@@ -119,11 +161,14 @@ export function GameLayout({ config }: GameLayoutProps) {
               <GameSettings
                 settings={settings}
                 onSettingsChange={setSettings}
+                open={isSettingsOpen}
+                onOpenChange={handleSettingsOpen}
               />
               <Button
                 variant="ghost"
                 onClick={() => setIsHelpOpen(true)}
                 size="icon"
+                disabled={state.isGameOver}
               >
                 <HelpCircle className="size-4" />
               </Button>
@@ -131,6 +176,7 @@ export function GameLayout({ config }: GameLayoutProps) {
                 variant="ghost"
                 onClick={gameActions.togglePause}
                 size="icon"
+                disabled={state.isGameOver || isHelpOpen || isSettingsOpen}
               >
                 {state.isPaused ? (
                   <PlayIcon className="size-4" />
@@ -155,21 +201,6 @@ export function GameLayout({ config }: GameLayoutProps) {
               showParticles={settings.display.particles}
               className="h-full"
             />
-
-            {(state.isPaused || state.isGameOver) && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                <div className="text-center">
-                  <h2 className="mb-2 text-3xl font-bold">
-                    {state.isGameOver ? 'Game Over' : 'Paused'}
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {state.isGameOver
-                      ? `Final Score: ${state.score}`
-                      : 'Press P to resume'}
-                  </p>
-                </div>
-              </div>
-            )}
           </Card>
         </div>
 
@@ -178,8 +209,8 @@ export function GameLayout({ config }: GameLayoutProps) {
           {/* Next Piece Preview */}
           <Card className="p-4">
             <h2 className="mb-2 font-mono font-medium">Next Piece</h2>
-            <div className="h-56">
-              <NextPiecePreview piece={state.nextPiece} cellSize={50} />
+            <div className="h-40">
+              <NextPiecePreview piece={state.nextPiece} cellSize={30} />
             </div>
           </Card>
 
@@ -253,7 +284,9 @@ export function GameLayout({ config }: GameLayoutProps) {
           onMoveDown={gameActions.moveDown}
           onRotate={gameActions.rotate}
           onHardDrop={gameActions.hardDrop}
-          disabled={state.isPaused || state.isGameOver}
+          disabled={
+            state.isPaused || state.isGameOver || isHelpOpen || isSettingsOpen
+          }
           className="bottom-0"
         />
       )}
@@ -261,7 +294,9 @@ export function GameLayout({ config }: GameLayoutProps) {
       {/* Dialogs */}
       <HelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
       <GamePauseDialog
-        isOpen={state.isPaused && !state.isGameOver}
+        isOpen={
+          state.isPaused && !state.isGameOver && !isHelpOpen && !isSettingsOpen
+        }
         onResume={gameActions.togglePause}
         onRestart={gameActions.reset}
       />

@@ -1,5 +1,6 @@
 'use client'
 
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Eye,
   EyeOff,
@@ -41,11 +42,59 @@ interface GameSettings {
 interface GameSettingsProps {
   settings: GameSettings
   onSettingsChange: (settings: GameSettings) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+const settingsVariants = {
+  hidden: { opacity: 0, x: 20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30
+    }
+  },
+  exit: {
+    opacity: 0,
+    x: 20,
+    transition: {
+      duration: 0.2
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30
+    }
+  }
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
 }
 
 export function GameSettings({
   settings,
-  onSettingsChange
+  onSettingsChange,
+  open,
+  onOpenChange
 }: GameSettingsProps) {
   const updateSettings = <
     K extends keyof GameSettings,
@@ -65,125 +114,145 @@ export function GameSettings({
   }
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Open settings">
           <Settings2 className="size-4" />
         </Button>
       </SheetTrigger>
       <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Game Settings</SheetTitle>
-          <SheetDescription>Customize your gaming experience</SheetDescription>
-        </SheetHeader>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <SheetHeader>
+            <SheetTitle>Game Settings</SheetTitle>
+            <SheetDescription>
+              Customize your gaming experience
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="space-y-6 py-6">
-          {/* Audio Settings */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium">Audio Settings</h4>
+          <div className="space-y-6 py-6">
+            {/* Audio Settings */}
+            <motion.div className="space-y-4" variants={settingsVariants}>
+              <h4 className="text-sm font-medium">Audio Settings</h4>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {settings.audio.enabled ? (
-                  <Volume2 className="size-4" />
-                ) : (
-                  <VolumeX className="size-4" />
-                )}
-                <Label htmlFor="audio-toggle">Sound Enabled</Label>
-              </div>
-              <Switch
-                id="audio-toggle"
-                checked={settings.audio.enabled}
-                onCheckedChange={checked =>
-                  updateSettings('audio', 'enabled', checked)
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="volume-slider">Volume</Label>
-              <Slider
-                id="volume-slider"
-                min={0}
-                max={100}
-                step={1}
-                value={[settings.audio.volume]}
-                onValueChange={([value]) =>
-                  updateSettings('audio', 'volume', value)
-                }
-                disabled={!settings.audio.enabled}
-                aria-label="Volume"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="effects-toggle">Sound Effects</Label>
+              <motion.div
+                className="flex items-center justify-between"
+                variants={itemVariants}
+              >
+                <div className="flex items-center gap-2">
+                  {settings.audio.enabled ? (
+                    <Volume2 className="size-4" />
+                  ) : (
+                    <VolumeX className="size-4" />
+                  )}
+                  <Label htmlFor="audio-toggle">Sound Enabled</Label>
+                </div>
                 <Switch
-                  id="effects-toggle"
-                  checked={settings.audio.effects}
+                  id="audio-toggle"
+                  checked={settings.audio.enabled}
                   onCheckedChange={checked =>
-                    updateSettings('audio', 'effects', checked)
+                    updateSettings('audio', 'enabled', checked)
+                  }
+                />
+              </motion.div>
+
+              <motion.div className="space-y-2" variants={itemVariants}>
+                <Label htmlFor="volume-slider">Volume</Label>
+                <Slider
+                  id="volume-slider"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[settings.audio.volume]}
+                  onValueChange={([value]) =>
+                    updateSettings('audio', 'volume', value)
                   }
                   disabled={!settings.audio.enabled}
+                  aria-label="Volume"
                 />
-              </div>
-            </div>
+              </motion.div>
+
+              <motion.div className="space-y-2" variants={itemVariants}>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="effects-toggle">Sound Effects</Label>
+                  <Switch
+                    id="effects-toggle"
+                    checked={settings.audio.effects}
+                    onCheckedChange={checked =>
+                      updateSettings('audio', 'effects', checked)
+                    }
+                    disabled={!settings.audio.enabled}
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            <Separator />
+
+            {/* Visual Settings */}
+            <motion.div className="space-y-4" variants={settingsVariants}>
+              <h4 className="text-sm font-medium">Visual Settings</h4>
+
+              <motion.div
+                className="flex items-center justify-between"
+                variants={itemVariants}
+              >
+                <div className="flex items-center gap-2">
+                  {settings.display.showGhost ? (
+                    <Eye className="size-4" />
+                  ) : (
+                    <EyeOff className="size-4" />
+                  )}
+                  <Label htmlFor="ghost-toggle">Ghost Piece</Label>
+                </div>
+                <Switch
+                  id="ghost-toggle"
+                  checked={settings.display.showGhost}
+                  onCheckedChange={checked =>
+                    updateSettings('display', 'showGhost', checked)
+                  }
+                />
+              </motion.div>
+
+              <motion.div
+                className="flex items-center justify-between"
+                variants={itemVariants}
+              >
+                <div className="flex items-center gap-2">
+                  <Grid className="size-4" />
+                  <Label htmlFor="grid-toggle">Show Grid</Label>
+                </div>
+                <Switch
+                  id="grid-toggle"
+                  checked={settings.display.showGrid}
+                  onCheckedChange={checked =>
+                    updateSettings('display', 'showGrid', checked)
+                  }
+                />
+              </motion.div>
+
+              <motion.div
+                className="flex items-center justify-between"
+                variants={itemVariants}
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="size-4" />
+                  <Label htmlFor="particles-toggle">Visual Effects</Label>
+                </div>
+                <Switch
+                  id="particles-toggle"
+                  checked={settings.display.particles}
+                  onCheckedChange={checked =>
+                    updateSettings('display', 'particles', checked)
+                  }
+                />
+              </motion.div>
+            </motion.div>
           </div>
-
-          <Separator />
-
-          {/* Visual Settings */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium">Visual Settings</h4>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {settings.display.showGhost ? (
-                  <Eye className="size-4" />
-                ) : (
-                  <EyeOff className="size-4" />
-                )}
-                <Label htmlFor="ghost-toggle">Ghost Piece</Label>
-              </div>
-              <Switch
-                id="ghost-toggle"
-                checked={settings.display.showGhost}
-                onCheckedChange={checked =>
-                  updateSettings('display', 'showGhost', checked)
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Grid className="size-4" />
-                <Label htmlFor="grid-toggle">Show Grid</Label>
-              </div>
-              <Switch
-                id="grid-toggle"
-                checked={settings.display.showGrid}
-                onCheckedChange={checked =>
-                  updateSettings('display', 'showGrid', checked)
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4" />
-                <Label htmlFor="particles-toggle">Visual Effects</Label>
-              </div>
-              <Switch
-                id="particles-toggle"
-                checked={settings.display.particles}
-                onCheckedChange={checked =>
-                  updateSettings('display', 'particles', checked)
-                }
-              />
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </SheetContent>
     </Sheet>
   )
