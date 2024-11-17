@@ -35,23 +35,23 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="scroll-smooth antialiased">
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem
-        disableTransitionOnChange
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={cn(
+          geistSans.variable,
+          geistMono.variable,
+          'min-h-screen scroll-smooth antialiased'
+        )}
       >
-        <body
-          className={cn(
-            geistSans.variable,
-            geistMono.variable,
-            'min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-background via-background to-muted'
-          )}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
         >
-          {children}
-        </body>
-      </ThemeProvider>
+          <main className="bg-background text-foreground">{children}</main>
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
