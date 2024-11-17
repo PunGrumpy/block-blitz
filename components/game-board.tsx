@@ -1,7 +1,7 @@
 'use client'
 
+import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { LinesClearedEffect } from '@/lib/effects'
@@ -245,7 +245,7 @@ export function GameBoard({
         {clearedRows.map(rowIndex => (
           <motion.div
             key={rowIndex}
-            className="absolute left-0 right-0 bg-white/20"
+            className="absolute inset-x-0 bg-white/20"
             style={{
               top: rowIndex * cellSize,
               height: cellSize

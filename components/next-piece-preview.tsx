@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
 
 import { GamePiece } from '@/types/game'
@@ -127,14 +127,14 @@ export function NextPiecePreview({
   if (!mounted) {
     return (
       <div
-        className="flex h-full w-full items-center justify-center"
+        className="flex size-full items-center justify-center"
         style={{ minHeight: cellSize * 4 }}
       />
     )
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex size-full items-center justify-center">
       <motion.div
         className="relative"
         variants={previewContainerVariants}
