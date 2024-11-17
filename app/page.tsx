@@ -1,5 +1,7 @@
 'use client';
 
+import * as React from 'react';
+
 import { GameBoard } from '@/components/game-board';
 import { GameLayout } from '@/components/game-layout';
 import { GameSettings } from '@/components/game-settings';
@@ -10,7 +12,6 @@ import { TouchControls } from '@/components/touch-controls';
 import { useGameState } from '@/hooks/use-game-state';
 import { useKeyboard } from '@/hooks/use-keyboard';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import * as React from 'react';
 
 const GAME_CONFIG = {
   boardWidth: 10,
