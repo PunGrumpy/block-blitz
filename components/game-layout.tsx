@@ -118,7 +118,9 @@ export function GameLayout({
               <div className="text-xs text-muted-foreground">Time</div>
               <div className="text-lg font-bold">
                 {Math.floor(gameState.timeLeft / 60)}:
-                {(gameState.timeLeft % 60).toString().padStart(2, '0')}
+                {Math.floor(gameState.timeLeft % 60)
+                  .toString()
+                  .padStart(2, '0')}
               </div>
             </div>
           </div>
