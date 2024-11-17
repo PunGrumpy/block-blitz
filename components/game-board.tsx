@@ -72,7 +72,7 @@ export function GameBoard({
 
       // Draw the grid if enabled
       if (showGrid) {
-        ctx.strokeStyle = 'bg-muted-foreground/20'
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
         ctx.lineWidth = 1
         for (let i = 0; i < board.length; i++) {
           for (let j = 0; j < board[i].length; j++) {
@@ -87,7 +87,7 @@ export function GameBoard({
           if (cell) {
             ctx.fillStyle = cell
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
-            ctx.strokeStyle = 'bg-muted-foreground'
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
             ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize)
           }
         })
@@ -122,7 +122,7 @@ export function GameBoard({
               const pieceX = (currentPiece.position.x + x) * cellSize
               const pieceY = (currentPiece.position.y + y) * cellSize
               ctx.fillRect(pieceX, pieceY, cellSize, cellSize)
-              ctx.strokeStyle = 'bg-muted-foreground'
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
               ctx.strokeRect(pieceX, pieceY, cellSize, cellSize)
             }
           })
