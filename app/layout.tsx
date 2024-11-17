@@ -36,22 +36,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth antialiased">
-      <body
-        className={cn(
-          geistSans.variable,
-          geistMono.variable,
-          'min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-background via-background to-muted'
-        )}
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="dark"
+        enableSystem
+        disableTransitionOnChange
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
+        <body
+          className={cn(
+            geistSans.variable,
+            geistMono.variable,
+            'min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-background via-background to-muted'
+          )}
         >
           {children}
-        </ThemeProvider>
-      </body>
+        </body>
+      </ThemeProvider>
     </html>
   )
 }
