@@ -34,7 +34,7 @@ export function GameOverDialog({
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
         {hasWon && <ConfettiExplosion />}
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
@@ -76,12 +76,12 @@ export function GameOverDialog({
           </Card>
         </div>
 
-        <div className="mt-6 flex flex-col gap-2">
+        <div className="mt-6 flex flex-col gap-2 space-y-2">
           <Button onClick={onRestart} className="w-full gap-2">
             <RotateCcw className="size-4" />
             Play Again
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             className="w-full gap-2"
             onClick={() =>
@@ -95,7 +95,7 @@ export function GameOverDialog({
           >
             <Share2 className="size-4" />
             Share Score
-          </Button>
+          </Button> */}
         </div>
       </DialogContent>
     </Dialog>
