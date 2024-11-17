@@ -1,5 +1,7 @@
-import { Trophy, RotateCcw, Share2 } from 'lucide-react'
+import { RotateCcw, Trophy } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -7,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { Card } from '@/components/ui/card'
 
 interface GameOverDialogProps {
   isOpen: boolean

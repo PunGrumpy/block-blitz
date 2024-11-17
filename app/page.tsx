@@ -4,17 +4,17 @@ import * as React from 'react'
 
 import { GameBoard } from '@/components/game-board'
 import { GameLayout } from '@/components/game-layout'
+import { GameOverDialog } from '@/components/game-over-dialog'
 import { GamePauseDialog } from '@/components/game-pause-dialog'
 import { GameSettings } from '@/components/game-settings'
 import { HelpDialog } from '@/components/help-dialog'
 import { NextPiecePreview } from '@/components/next-piece-preview'
 import { TouchControls } from '@/components/touch-controls'
+import { DEFAULT_CONFIG } from '@/constants/game'
 import { useGameSound } from '@/hooks/use-game-sound'
 import { useGameState } from '@/hooks/use-game-state'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
-import { GameOverDialog } from '@/components/game-over-dialog'
-import { DEFAULT_CONFIG } from '@/constants/game'
 
 export default function GamePage() {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false)
