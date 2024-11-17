@@ -14,6 +14,7 @@ import {
   clearRows,
   isGameOver
 } from '@/lib/collision'
+import { SCORING } from '@/constants/game'
 
 const INITIAL_STATE: GameState = {
   board: Array(20)
@@ -41,9 +42,41 @@ function isValidMove(
   return !hasCollision(board, movedPiece)
 }
 
-function calculateScore(linesCleared: number): number {
-  const basePoints = [0, 100, 300, 500, 800]
-  return basePoints[linesCleared] || 0
+function calculateScore(
+  linesCleared: number,
+  dropDistance: number = 0,
+  isSoftDrop: boolean = false,
+  level: number = 1
+): number {
+  let score = 0
+
+  // Calculate line clear score
+  switch (linesCleared) {
+    case 1:
+      score += SCORING.singleLine
+      break
+    case 2:
+      score += SCORING.doubleLine
+      break
+    case 3:
+      score += SCORING.tripleLine
+      break
+    case 4:
+      score += SCORING.tetris
+      break
+  }
+
+  // Add drop bonus
+  if (dropDistance > 0) {
+    score += Math.floor(
+      dropDistance * (isSoftDrop ? SCORING.softDrop : SCORING.hardDrop)
+    )
+  }
+
+  // Level multiplier (10% increase per level)
+  score = Math.floor(score * (1 + (level - 1) * 0.1))
+
+  return Math.floor(score)
 }
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -108,7 +141,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         const newBoard = mergePieceToBoard(state.board, state.currentPiece)
         const fullRows = findFullRows(newBoard)
         const updatedBoard = clearRows(newBoard, fullRows)
-        const additionalScore = calculateScore(fullRows.length)
+        const additionalScore = Math.floor(
+          calculateScore(fullRows.length, 0, false, state.level)
+        )
 
         if (isGameOver({ ...state, board: updatedBoard })) {
           return {
@@ -118,14 +153,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           }
         }
 
+        // Apply combo if applicable
+        const now = Date.now()
+        const isCombo =
+          fullRows.length > 0 &&
+          now - state.lastComboTime < SCORING.combo.timeWindow
+        const comboMultiplier = isCombo
+          ? Math.floor(SCORING.combo.multiplier * state.combo)
+          : 1
+        const finalScore = Math.floor(
+          state.score + additionalScore * comboMultiplier
+        )
+
         return {
           ...state,
           board: updatedBoard,
           currentPiece: state.nextPiece,
           nextPiece: getRandomPiece(),
-          score: state.score + additionalScore,
+          score: finalScore,
           lines: state.lines + fullRows.length,
-          level: Math.floor((state.lines + fullRows.length) / 10) + 1
+          level: Math.floor((state.lines + fullRows.length) / 10) + 1,
+          combo: isCombo ? state.combo + 1 : 0,
+          lastComboTime: fullRows.length > 0 ? now : state.lastComboTime
         }
       }
     }
@@ -135,7 +184,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       let dropDistance = 0
       let newPosition = { ...state.currentPiece.position }
 
-      // Find the furthest valid position
       while (
         isValidMove(state.board, state.currentPiece, {
           x: newPosition.x,
@@ -146,14 +194,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         dropDistance += 1
       }
 
-      // Immediately place the piece and process the result
       const newBoard = mergePieceToBoard(state.board, {
         ...state.currentPiece,
         position: newPosition
       })
       const fullRows = findFullRows(newBoard)
       const updatedBoard = clearRows(newBoard, fullRows)
-      const additionalScore = calculateScore(fullRows.length) + dropDistance
+
+      const additionalScore = Math.floor(
+        calculateScore(fullRows.length, dropDistance, false, state.level)
+      )
 
       if (isGameOver({ ...state, board: updatedBoard })) {
         return {
@@ -163,14 +213,27 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
+      const now = Date.now()
+      const isCombo =
+        fullRows.length > 0 &&
+        now - state.lastComboTime < SCORING.combo.timeWindow
+      const comboMultiplier = isCombo
+        ? Math.floor(SCORING.combo.multiplier * state.combo)
+        : 1
+      const finalScore = Math.floor(
+        state.score + additionalScore * comboMultiplier
+      )
+
       return {
         ...state,
         board: updatedBoard,
         currentPiece: state.nextPiece,
         nextPiece: getRandomPiece(),
-        score: state.score + additionalScore,
+        score: finalScore,
         lines: state.lines + fullRows.length,
-        level: Math.floor((state.lines + fullRows.length) / 10) + 1
+        level: Math.floor((state.lines + fullRows.length) / 10) + 1,
+        combo: isCombo ? state.combo + 1 : 0,
+        lastComboTime: fullRows.length > 0 ? now : state.lastComboTime
       }
     }
 
