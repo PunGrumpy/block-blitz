@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import {
   ArrowDown,
   ArrowLeft,
@@ -11,6 +12,40 @@ import * as React from 'react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+
+const buttonVariants = {
+  initial: { scale: 1 },
+  press: { scale: 0.95 },
+  hover: { scale: 1.05 },
+  tap: { scale: 0.98 }
+}
+
+const controlsContainerVariants = {
+  hidden: { y: 100, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 30,
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const buttonContainerVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 24
+    }
+  }
+}
 
 interface TouchControlsProps {
   onMoveLeft: () => void
@@ -83,79 +118,114 @@ export function TouchControls({
   )
 
   return (
-    <div
+    <motion.div
       className={cn(
         'fixed inset-x-0 bottom-0 bg-background/80 backdrop-blur-sm md:hidden',
         className
       )}
+      variants={controlsContainerVariants}
+      initial="hidden"
+      animate="visible"
     >
       <div className="container flex h-[20vh] items-center justify-between gap-4 p-4">
         {/* Movement controls */}
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            size="lg"
-            className="size-16 rounded-lg border"
-            onTouchStart={() => handleTouchStart(onMoveLeft, 'left')}
-            onTouchEnd={() => handleTouchEnd('left')}
-            onTouchCancel={() => handleTouchEnd('left')}
-            disabled={disabled}
-            aria-label="Move left"
+        <motion.div className="flex gap-4" variants={buttonContainerVariants}>
+          <motion.div
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
           >
-            <ArrowLeft className="size-8" />
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="size-16 rounded-lg border"
-            onTouchStart={() => handleTouchStart(onMoveRight, 'right')}
-            onTouchEnd={() => handleTouchEnd('right')}
-            onTouchCancel={() => handleTouchEnd('right')}
-            disabled={disabled}
-            aria-label="Move right"
+            <Button
+              variant="outline"
+              size="lg"
+              className="size-16 rounded-lg border"
+              onTouchStart={() => handleTouchStart(onMoveLeft, 'left')}
+              onTouchEnd={() => handleTouchEnd('left')}
+              onTouchCancel={() => handleTouchEnd('left')}
+              disabled={disabled}
+              aria-label="Move left"
+            >
+              <ArrowLeft className="size-8" />
+            </Button>
+          </motion.div>
+
+          <motion.div
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
           >
-            <ArrowRight className="size-8" />
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              size="lg"
+              className="size-16 rounded-lg border"
+              onTouchStart={() => handleTouchStart(onMoveRight, 'right')}
+              onTouchEnd={() => handleTouchEnd('right')}
+              onTouchCancel={() => handleTouchEnd('right')}
+              disabled={disabled}
+              aria-label="Move right"
+            >
+              <ArrowRight className="size-8" />
+            </Button>
+          </motion.div>
+        </motion.div>
 
         {/* Hard drop button */}
-        <Button
-          variant="default"
-          size="lg"
-          className="size-16 rounded-lg"
-          onClick={onHardDrop}
-          disabled={disabled}
-          aria-label="Hard drop"
+        <motion.div
+          variants={buttonContainerVariants}
+          whileHover="hover"
+          whileTap="tap"
         >
-          <ChevronDown className="size-8" />
-        </Button>
+          <Button
+            variant="default"
+            size="lg"
+            className="size-16 rounded-lg"
+            onClick={onHardDrop}
+            disabled={disabled}
+            aria-label="Hard drop"
+          >
+            <ChevronDown className="size-8" />
+          </Button>
+        </motion.div>
 
         {/* Action controls */}
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            size="lg"
-            className="size-16 rounded-lg border"
-            onTouchStart={() => handleTouchStart(onMoveDown, 'down')}
-            onTouchEnd={() => handleTouchEnd('down')}
-            onTouchCancel={() => handleTouchEnd('down')}
-            disabled={disabled}
-            aria-label="Move down"
+        <motion.div className="flex gap-4" variants={buttonContainerVariants}>
+          <motion.div
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
           >
-            <ArrowDown className="size-8" />
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="size-16 rounded-lg border"
-            onClick={onRotate}
-            disabled={disabled}
-            aria-label="Rotate piece"
+            <Button
+              variant="outline"
+              size="lg"
+              className="size-16 rounded-lg border"
+              onTouchStart={() => handleTouchStart(onMoveDown, 'down')}
+              onTouchEnd={() => handleTouchEnd('down')}
+              onTouchCancel={() => handleTouchEnd('down')}
+              disabled={disabled}
+              aria-label="Move down"
+            >
+              <ArrowDown className="size-8" />
+            </Button>
+          </motion.div>
+
+          <motion.div
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
           >
-            <RotateCcw className="size-8" />
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              size="lg"
+              className="size-16 rounded-lg border"
+              onClick={onRotate}
+              disabled={disabled}
+              aria-label="Rotate piece"
+            >
+              <RotateCcw className="size-8" />
+            </Button>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 }

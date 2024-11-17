@@ -1,12 +1,53 @@
 'use client'
 
 import React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
-import { Card } from '@/components/ui/card'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { LinesClearedEffect } from '@/lib/effects'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
+
+// Animation variants
+const pieceVariants = {
+  initial: { opacity: 0, scale: 0.8 },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 500,
+      damping: 30
+    }
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.8,
+    transition: { duration: 0.2 }
+  }
+}
+
+const ghostPieceVariants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 0.2,
+    transition: {
+      duration: 0.2
+    }
+  }
+}
+
+const rowClearVariants = {
+  initial: { scaleY: 1, opacity: 1 },
+  animate: {
+    scaleY: 0,
+    opacity: 0,
+    transition: {
+      duration: 0.3,
+      ease: 'easeOut'
+    }
+  }
+}
 
 interface GameBoardProps {
   state: GameState
@@ -28,6 +69,7 @@ export function GameBoard({
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const effectsRef = React.useRef<LinesClearedEffect>(new LinesClearedEffect())
   const [isMounted, setIsMounted] = React.useState(false)
+  const [clearedRows, setClearedRows] = React.useState<number[]>([])
 
   const getGhostPosition = React.useCallback(
     (piece: GamePiece): number => {
@@ -79,7 +121,7 @@ export function GameBoard({
         })
       })
 
-      // Draw ghost piece
+      // Draw ghost piece with motion
       if (showGhost && currentPiece && !state.isPaused && !state.isGameOver) {
         const ghostY = getGhostPosition(currentPiece)
         ctx.globalAlpha = 0.2
@@ -99,7 +141,7 @@ export function GameBoard({
         ctx.globalAlpha = 1
       }
 
-      // Draw current piece
+      // Draw current piece with motion
       if (currentPiece) {
         ctx.fillStyle = currentPiece.color
         currentPiece.shape.forEach((row, y) => {
@@ -134,12 +176,60 @@ export function GameBoard({
     setIsMounted(true)
   }, [])
 
+  // Track cleared rows for animation
+  React.useEffect(() => {
+    const currentRows = state.board.reduce((acc, row, index) => {
+      if (row.every(cell => cell !== null)) {
+        acc.push(index)
+      }
+      return acc
+    }, [] as number[])
+
+    if (currentRows.length > 0) {
+      setClearedRows(currentRows)
+      setTimeout(() => setClearedRows([]), 300) // Clear after animation
+    }
+  }, [state.board])
+
   if (!isMounted) {
     return null
   }
 
   return (
-    <div className={cn('relative aspect-[1/2] h-full', className)}>
+    <motion.div
+      className={cn('relative aspect-[1/2] h-full', className)}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <AnimatePresence>
+        {state.isPaused || state.isGameOver ? (
+          <motion.div
+            className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="text-center"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+            >
+              <h2 className="mb-2 text-3xl font-bold">
+                {state.isGameOver ? 'Game Over' : 'Paused'}
+              </h2>
+              <p className="text-muted-foreground">
+                {state.isGameOver
+                  ? `Final Score: ${state.score}`
+                  : 'Press P to resume'}
+              </p>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       <canvas
         ref={canvasRef}
         width={state.board[0].length * cellSize}
@@ -150,6 +240,23 @@ export function GameBoard({
       >
         Your browser does not support the canvas element.
       </canvas>
-    </div>
+
+      <AnimatePresence>
+        {clearedRows.map(rowIndex => (
+          <motion.div
+            key={rowIndex}
+            className="absolute left-0 right-0 bg-white/20"
+            style={{
+              top: rowIndex * cellSize,
+              height: cellSize
+            }}
+            variants={rowClearVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          />
+        ))}
+      </AnimatePresence>
+    </motion.div>
   )
 }

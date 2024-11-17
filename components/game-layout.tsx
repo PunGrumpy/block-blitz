@@ -179,7 +179,7 @@ export function GameLayout({ config }: GameLayoutProps) {
           <Card className="p-4">
             <h2 className="mb-2 font-mono font-medium">Next Piece</h2>
             <div className="h-56">
-              <NextPiecePreview piece={state.nextPiece} cellSize={25} />
+              <NextPiecePreview piece={state.nextPiece} cellSize={50} />
             </div>
           </Card>
 

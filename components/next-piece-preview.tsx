@@ -1,8 +1,42 @@
 'use client'
 
+import { motion, AnimatePresence } from 'framer-motion'
 import React from 'react'
 
 import { GamePiece } from '@/types/game'
+
+const previewContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.2
+    }
+  }
+}
+
+const previewPieceVariants = {
+  initial: {
+    opacity: 0,
+    scale: 0.8
+  },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 25
+    }
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.8,
+    transition: {
+      duration: 0.2
+    }
+  }
+}
 
 interface NextPiecePreviewProps {
   piece: GamePiece | null
@@ -13,57 +47,113 @@ export function NextPiecePreview({
   piece,
   cellSize = 30
 }: NextPiecePreviewProps) {
-  const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const [mounted, setMounted] = React.useState(false)
+  const [pieceKey, setPieceKey] = React.useState(0)
+  const [renderedPiece, setRenderedPiece] = React.useState<GamePiece | null>(
+    null
+  )
 
+  // Handle mounting to prevent hydration mismatch
   React.useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas || !piece) return
+    setMounted(true)
+  }, [])
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+  // Update piece key when the piece changes to trigger animation
+  React.useEffect(() => {
+    if (piece && (!renderedPiece || piece.color !== renderedPiece.color)) {
+      setPieceKey(prev => prev + 1)
+      setRenderedPiece(piece)
+    }
+  }, [piece, renderedPiece])
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  const renderPiece = React.useCallback(() => {
+    if (!piece || !mounted) return null
 
-    // Calculate centering offsets
-    const pieceWidth = piece.shape[0].length * cellSize
-    const pieceHeight = piece.shape.length * cellSize
-    const offsetX = (canvas.width - pieceWidth) / 2
-    const offsetY = (canvas.height - pieceHeight) / 2
+    const cells: JSX.Element[] = []
+    const pieceHeight = piece.shape.length
+    const pieceWidth = piece.shape[0].length
 
-    // Draw piece with minimal style
-    ctx.fillStyle = piece.color
+    // Calculate size of the piece container
+    const pieceContainerWidth = pieceWidth * cellSize
+    const pieceContainerHeight = pieceHeight * cellSize
+
     piece.shape.forEach((row, y) => {
       row.forEach((isSet, x) => {
         if (isSet) {
-          // Draw block
-          ctx.fillRect(
-            offsetX + x * cellSize,
-            offsetY + y * cellSize,
-            cellSize,
-            cellSize
-          )
+          const style = {
+            width: cellSize - 1,
+            height: cellSize - 1,
+            backgroundColor: piece.color,
+            left: x * cellSize,
+            top: y * cellSize,
+            opacity: 1,
+            transform: 'scale(1)'
+          }
 
-          // Add subtle border
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
-          ctx.strokeRect(
-            offsetX + x * cellSize,
-            offsetY + y * cellSize,
-            cellSize,
-            cellSize
+          cells.push(
+            <motion.div
+              key={`${x}-${y}`}
+              className="absolute rounded-sm border border-white/10"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{
+                type: 'spring',
+                stiffness: 400,
+                damping: 25,
+                delay: (x + y) * 0.05
+              }}
+              style={style}
+            />
           )
         }
       })
     })
-  }, [piece, cellSize])
+
+    return (
+      <div
+        className="relative"
+        style={{
+          width: pieceContainerWidth,
+          height: pieceContainerHeight
+        }}
+      >
+        {cells}
+      </div>
+    )
+  }, [piece, cellSize, mounted])
+
+  // Prevent rendering until mounted to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <div
+        className="flex h-full w-full items-center justify-center"
+        style={{ minHeight: cellSize * 4 }}
+      />
+    )
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={6 * cellSize}
-      height={6 * cellSize}
-      className="h-56 w-full rounded-lg border border-border bg-background"
-      aria-label="Next piece preview"
-    />
+    <div className="flex h-full w-full items-center justify-center">
+      <motion.div
+        className="relative"
+        variants={previewContainerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pieceKey}
+            className="relative"
+            variants={previewPieceVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            {renderPiece()}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+    </div>
   )
 }
