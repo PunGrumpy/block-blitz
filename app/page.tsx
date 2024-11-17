@@ -13,6 +13,7 @@ import { useGameSound } from '@/hooks/use-game-sound'
 import { useGameState } from '@/hooks/use-game-state'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { GameOverDialog } from '@/components/game-over-dialog'
 
 const GAME_CONFIG = {
   boardWidth: 10,
@@ -147,6 +148,15 @@ export default function GamePage() {
       <GamePauseDialog
         isOpen={state.isPaused && !state.isGameOver}
         onResume={soundActions.togglePause}
+        onRestart={soundActions.reset}
+      />
+      <GameOverDialog
+        isOpen={state.isGameOver}
+        score={state.score}
+        level={state.level}
+        lines={state.lines}
+        timeLeft={state.timeLeft}
+        targetScore={GAME_CONFIG.targetScore}
         onRestart={soundActions.reset}
       />
     </GameLayout>
