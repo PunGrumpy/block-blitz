@@ -1,17 +1,6 @@
 'use client'
 
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  Keyboard,
-  KeyRound,
-  Smartphone,
-  Space,
-  Target,
-  Trophy
-} from 'lucide-react'
+import { Keyboard, Smartphone, Space, Target, Trophy } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -58,37 +47,45 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                   <div className="grid gap-3">
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <ArrowLeft className="size-4" /> or A
+                        <kbd className="rounded border px-2 font-mono">←</kbd>
+                        <span>or</span>
+                        <kbd className="rounded border px-2 font-mono">A</kbd>
                       </span>
                       <span className="text-muted-foreground">Move Left</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <ArrowRight className="size-4" /> or D
+                        <kbd className="rounded border px-2 font-mono">→</kbd>
+                        <span>or</span>
+                        <kbd className="rounded border px-2 font-mono">D</kbd>
                       </span>
                       <span className="text-muted-foreground">Move Right</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <ArrowDown className="size-4" /> or S
-                      </span>
-                      <span className="text-muted-foreground">Soft Drop</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <ArrowUp className="size-4" /> or W
+                        <kbd className="rounded border px-2 font-mono">↑</kbd>
+                        <span>or</span>
+                        <kbd className="rounded border px-2 font-mono">W</kbd>
                       </span>
                       <span className="text-muted-foreground">Rotate</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
+                        <kbd className="rounded border px-2 font-mono">↓</kbd>
+                        <span>or</span>
+                        <kbd className="rounded border px-2 font-mono">S</kbd>
+                      </span>
+                      <span className="text-muted-foreground">Soft Drop</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 rounded border px-2 font-mono">
                         <Space className="size-4" />
                       </span>
                       <span className="text-muted-foreground">Hard Drop</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <KeyRound className="size-4" /> P
+                        <kbd className="rounded border px-2 font-mono">P</kbd>
                       </span>
                       <span className="text-muted-foreground">Pause Game</span>
                     </div>
