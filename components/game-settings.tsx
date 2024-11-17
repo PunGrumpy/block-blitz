@@ -30,7 +30,6 @@ interface GameSettings {
     enabled: boolean
     volume: number
     effects: boolean
-    music: boolean
   }
   display: {
     showGhost: boolean
@@ -125,18 +124,6 @@ export function GameSettings({
                   checked={settings.audio.effects}
                   onCheckedChange={checked =>
                     updateSettings('audio', 'effects', checked)
-                  }
-                  disabled={!settings.audio.enabled}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="music-toggle">Background Music</Label>
-                <Switch
-                  id="music-toggle"
-                  checked={settings.audio.music}
-                  onCheckedChange={checked =>
-                    updateSettings('audio', 'music', checked)
                   }
                   disabled={!settings.audio.enabled}
                 />

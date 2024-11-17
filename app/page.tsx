@@ -34,8 +34,7 @@ export default function GamePage() {
     audio: {
       enabled: true,
       volume: 70,
-      effects: true,
-      music: true
+      effects: true
     },
     display: {
       showGhost: true,
@@ -98,7 +97,7 @@ export default function GamePage() {
   useKeyboard(soundActions, {
     repeatDelay: 200,
     repeatInterval: 50,
-    enabled: !state.isGameOver
+    enabled: !state.isGameOver && !state.isPaused
   })
 
   return (
@@ -119,6 +118,8 @@ export default function GamePage() {
           <GameBoard
             state={state}
             showGhost={settings.display.showGhost}
+            showGrid={settings.display.showGrid}
+            showParticles={settings.display.particles}
             className="max-h-full"
           />
         </div>

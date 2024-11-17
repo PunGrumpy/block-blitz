@@ -1,16 +1,18 @@
 'use client'
 
 import React from 'react'
-
 import { Card } from '@/components/ui/card'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
+import { LinesClearedEffect } from '@/lib/effects'
 
 interface GameBoardProps {
   state: GameState
   cellSize?: number
   showGhost?: boolean
+  showGrid?: boolean
+  showParticles?: boolean
   className?: string
 }
 
@@ -18,10 +20,14 @@ export function GameBoard({
   state,
   cellSize = 30,
   showGhost = true,
+  showGrid = true,
+  showParticles = true,
   className
 }: GameBoardProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const effectsRef = React.useRef<LinesClearedEffect>(new LinesClearedEffect())
   const [isMounted, setIsMounted] = React.useState(false)
+  const prevLinesRef = React.useRef(state.lines)
 
   // Find ghost piece position
   const getGhostPosition = React.useCallback(
@@ -52,12 +58,14 @@ export function GameBoard({
       // Clear the canvas
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-      // Draw the grid
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
-      ctx.lineWidth = 1
-      for (let i = 0; i < board.length; i++) {
-        for (let j = 0; j < board[i].length; j++) {
-          ctx.strokeRect(j * cellSize, i * cellSize, cellSize, cellSize)
+      // Draw the grid if enabled
+      if (showGrid) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+        ctx.lineWidth = 1
+        for (let i = 0; i < board.length; i++) {
+          for (let j = 0; j < board[i].length; j++) {
+            ctx.strokeRect(j * cellSize, i * cellSize, cellSize, cellSize)
+          }
         }
       }
 
@@ -119,9 +127,38 @@ export function GameBoard({
         })
         ctx.shadowBlur = 0
       }
+
+      // Draw particles if enabled
+      if (showParticles && effectsRef.current) {
+        effectsRef.current.update()
+        effectsRef.current.draw(ctx)
+
+        // Request next frame if there are active particles
+        if (effectsRef.current.hasParticles()) {
+          requestAnimationFrame(() => drawBoard(ctx))
+        }
+      }
     },
-    [state, cellSize, showGhost, getGhostPosition]
+    [state, cellSize, showGhost, showGrid, showParticles, getGhostPosition]
   )
+
+  // Check for cleared lines and create particles
+  React.useEffect(() => {
+    if (showParticles && state.lines > prevLinesRef.current) {
+      const linesCleared = state.lines - prevLinesRef.current
+      const canvasWidth = canvasRef.current?.width || 0
+
+      // Create particles for each cleared line
+      for (let i = 0; i < linesCleared; i++) {
+        effectsRef.current.createParticles(
+          state.board.length - 1 - i,
+          cellSize,
+          canvasWidth
+        )
+      }
+    }
+    prevLinesRef.current = state.lines
+  }, [state.lines, showParticles, cellSize])
 
   useGameLoop(canvasRef, drawBoard)
 
