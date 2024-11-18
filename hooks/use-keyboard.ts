@@ -7,6 +7,7 @@ interface GameControls {
   rotate: () => void
   hardDrop: () => void
   togglePause: () => void
+  toggleHelp: () => void
 }
 
 const KEYMAP: Record<string, keyof GameControls> = {
@@ -19,6 +20,7 @@ const KEYMAP: Record<string, keyof GameControls> = {
   KeyD: 'moveRight',
   KeyS: 'moveDown',
   KeyW: 'rotate',
+  KeyH: 'toggleHelp',
   KeyP: 'togglePause'
 }
 
