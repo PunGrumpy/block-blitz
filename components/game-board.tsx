@@ -1,12 +1,16 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
+import { Icon } from 'lucide-react'
 import React from 'react'
 
+import { PowerUpIndicator } from '@/components/power-up-indicator'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { LinesClearedEffect } from '@/lib/effects'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
+import { PowerUp } from '@/types/power-ups'
+import { hasCollision } from '@/lib/collision'
 
 // Animation variants
 const rowClearVariants = {
@@ -17,6 +21,25 @@ const rowClearVariants = {
     transition: {
       duration: 0.3,
       ease: 'easeOut'
+    }
+  }
+}
+
+const powerUpActivateVariants = {
+  initial: { scale: 0.8, opacity: 0 },
+  animate: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      duration: 0.3,
+      ease: 'backOut'
+    }
+  },
+  exit: {
+    scale: 1.2,
+    opacity: 0,
+    transition: {
+      duration: 0.2
     }
   }
 }
@@ -44,25 +67,64 @@ export function GameBoard({
   const boardLengthRef = React.useRef(state.board.length)
   const [isMounted, setIsMounted] = React.useState(false)
   const [clearedRows, setClearedRows] = React.useState<number[]>([])
+  const [activatingPowerUp, setActivatingPowerUp] =
+    React.useState<PowerUp | null>(null)
 
   const getGhostPosition = React.useCallback(
     (piece: GamePiece): number => {
+      if (!piece) return 0
+
       let ghostY = piece.position.y
-      while (ghostY < state.board.length) {
-        if (ghostY + 1 >= state.board.length) break
-        const hasCollision = piece.shape.some((row, y) =>
-          row.some(
-            (cell, x) =>
-              cell &&
-              state.board[ghostY + y + 1]?.[piece.position.x + x] !== null
-          )
+      while (
+        !hasCollision(
+          state.board,
+          piece,
+          { ...piece.position, y: ghostY + 1 },
+          state.isGhostMode
         )
-        if (hasCollision) break
+      ) {
         ghostY++
       }
       return ghostY
     },
-    [state.board]
+    [state.board, state.isGhostMode]
+  )
+
+  const drawPowerUpEffect = React.useCallback(
+    (ctx: CanvasRenderingContext2D, powerUp: PowerUp, x: number, y: number) => {
+      const size = cellSize
+      const centerX = x + size / 2
+      const centerY = y + size / 2
+
+      // Create a glowing effect
+      const gradient = ctx.createRadialGradient(
+        centerX,
+        centerY,
+        0,
+        centerX,
+        centerY,
+        size
+      )
+      gradient.addColorStop(0, powerUp.color)
+      gradient.addColorStop(0.6, `${powerUp.color}80`) // Semi-transparent
+      gradient.addColorStop(1, 'transparent')
+
+      ctx.fillStyle = gradient
+      ctx.fillRect(x, y, size, size)
+
+      // Add pulsing animation
+      const time = Date.now() / 1000
+      const scale = 1 + Math.sin(time * 4) * 0.1
+      ctx.save()
+      ctx.translate(centerX, centerY)
+      ctx.scale(scale, scale)
+      ctx.translate(-centerX, -centerY)
+      ctx.fillStyle = powerUp.color
+      ctx.globalAlpha = 0.3
+      ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.8, size * 0.8)
+      ctx.restore()
+    },
+    [cellSize]
   )
 
   const drawBoard = React.useCallback(
@@ -71,6 +133,32 @@ export function GameBoard({
 
       // Clear the canvas
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
+      // Draw global power-up effects
+      if (state.isTimeFrozen) {
+        ctx.fillStyle = 'rgba(0, 191, 255, 0.1)'
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
+        // Add frost effect at the edges
+        const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height)
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)')
+        gradient.addColorStop(0.1, 'transparent')
+        gradient.addColorStop(0.9, 'transparent')
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.2)')
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+      }
+
+      if (state.isGhostMode) {
+        ctx.fillStyle = 'rgba(152, 251, 152, 0.1)'
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
+        // Add ethereal effect
+        const time = Date.now() / 1000
+        const opacity = Math.sin(time * 2) * 0.1 + 0.2
+        ctx.fillStyle = `rgba(152, 251, 152, ${opacity})`
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+      }
 
       // Draw the grid if enabled
       if (showGrid) {
@@ -89,14 +177,34 @@ export function GameBoard({
           if (cell) {
             ctx.fillStyle = cell
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
+
+            // Add slight gradient for depth
+            const gradient = ctx.createLinearGradient(
+              x * cellSize,
+              y * cellSize,
+              x * cellSize,
+              (y + 1) * cellSize
+            )
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)')
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)')
+            ctx.fillStyle = gradient
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
+
+            // Add border
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
             ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize)
           }
         })
       })
 
-      // Draw ghost piece with motion
-      if (showGhost && currentPiece && !state.isPaused && !state.isGameOver) {
+      // Draw ghost piece
+      if (
+        showGhost &&
+        currentPiece &&
+        !state.isPaused &&
+        !state.isGameOver &&
+        !state.isGhostMode
+      ) {
         const ghostY = getGhostPosition(currentPiece)
         ctx.globalAlpha = 0.2
         ctx.fillStyle = currentPiece.color
@@ -115,15 +223,35 @@ export function GameBoard({
         ctx.globalAlpha = 1
       }
 
-      // Draw current piece with motion
+      // Draw current piece
       if (currentPiece) {
-        ctx.fillStyle = currentPiece.color
         currentPiece.shape.forEach((row, y) => {
           row.forEach((isSet, x) => {
             if (isSet) {
               const pieceX = (currentPiece.position.x + x) * cellSize
               const pieceY = (currentPiece.position.y + y) * cellSize
-              ctx.fillRect(pieceX, pieceY, cellSize, cellSize)
+
+              if (currentPiece.powerUp) {
+                // Draw power-up piece with special effects
+                drawPowerUpEffect(ctx, currentPiece.powerUp, pieceX, pieceY)
+              } else {
+                // Draw normal piece
+                ctx.fillStyle = currentPiece.color
+                ctx.fillRect(pieceX, pieceY, cellSize, cellSize)
+
+                // Add highlighting
+                const gradient = ctx.createLinearGradient(
+                  pieceX,
+                  pieceY,
+                  pieceX,
+                  pieceY + cellSize
+                )
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)')
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)')
+                ctx.fillStyle = gradient
+                ctx.fillRect(pieceX, pieceY, cellSize, cellSize)
+              }
+
               ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
               ctx.strokeRect(pieceX, pieceY, cellSize, cellSize)
             }
@@ -141,7 +269,15 @@ export function GameBoard({
         }
       }
     },
-    [state, cellSize, showGhost, showGrid, showParticles, getGhostPosition]
+    [
+      state,
+      cellSize,
+      showGhost,
+      showGrid,
+      showParticles,
+      getGhostPosition,
+      drawPowerUpEffect
+    ]
   )
 
   useGameLoop(canvasRef, drawBoard)
@@ -161,9 +297,17 @@ export function GameBoard({
 
     if (currentRows.length > 0) {
       setClearedRows(currentRows)
-      setTimeout(() => setClearedRows([]), 300) // Clear after animation
+      setTimeout(() => setClearedRows([]), 300)
     }
   }, [state.board])
+
+  // Track power-up activation
+  React.useEffect(() => {
+    if (state.currentPiece?.powerUp) {
+      setActivatingPowerUp(state.currentPiece.powerUp)
+      setTimeout(() => setActivatingPowerUp(null), 500)
+    }
+  }, [state.currentPiece])
 
   // Check for cleared lines and create particles
   React.useEffect(() => {
@@ -172,7 +316,6 @@ export function GameBoard({
       const canvasWidth = canvasRef.current?.width || 0
       boardLengthRef.current = state.board.length
 
-      // Create particles for each cleared line
       for (let i = 0; i < linesCleared; i++) {
         effectsRef.current.createParticles(
           boardLengthRef.current - 1 - i,
@@ -189,39 +332,233 @@ export function GameBoard({
   }
 
   return (
-    <motion.div
-      className={cn('relative aspect-[1/2] size-full', className)}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
+    <div
+      className={cn('relative aspect-[1/2] h-full', className)}
+      aria-label="Game Board"
     >
-      <canvas
-        ref={canvasRef}
-        width={state.board[0].length * cellSize}
-        height={state.board.length * cellSize}
-        className="size-full rounded-lg border border-border"
-        aria-label="Game Board"
-        role="img"
+      {/* Main Game Canvas */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="relative h-full"
       >
-        Your browser does not support the canvas element.
-      </canvas>
+        <canvas
+          ref={canvasRef}
+          width={state.board[0].length * cellSize}
+          height={state.board.length * cellSize}
+          className="size-full rounded-lg border border-border"
+          role="img"
+          aria-label="Game Board Canvas"
+        >
+          Your browser does not support the canvas element.
+        </canvas>
 
-      <AnimatePresence>
-        {clearedRows.map(rowIndex => (
+        {/* Row Clear Animation */}
+        <AnimatePresence>
+          {clearedRows.map(rowIndex => (
+            <motion.div
+              key={rowIndex}
+              className="absolute inset-x-0 bg-foreground/20"
+              style={{
+                top: rowIndex * cellSize,
+                height: cellSize
+              }}
+              variants={rowClearVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            />
+          ))}
+        </AnimatePresence>
+
+        {/* Power-up Activation Effect */}
+        <AnimatePresence>
+          {activatingPowerUp && (
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center"
+              variants={powerUpActivateVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <div
+                className="rounded-full p-8"
+                style={{ backgroundColor: `${activatingPowerUp.color}40` }}
+              >
+                {React.createElement(activatingPowerUp.icon, {
+                  size: 48
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Active Power-ups List */}
+        <div className="absolute left-4 top-4 flex flex-col gap-2">
+          <AnimatePresence>
+            {state.activePowerUps.map(powerUp => (
+              <PowerUpIndicator key={powerUp.startTime} powerUp={powerUp} />
+            ))}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+      {/* Game State Overlays */}
+      {(state.isPaused || state.isGameOver) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <motion.div
-            key={rowIndex}
-            className="absolute inset-x-0 bg-foreground/20"
-            style={{
-              top: rowIndex * cellSize,
-              height: cellSize
-            }}
-            variants={rowClearVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          />
-        ))}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center"
+          >
+            <h2 className="mb-2 text-3xl font-bold">
+              {state.isGameOver ? 'Game Over' : 'Paused'}
+            </h2>
+            <p className="text-muted-foreground">
+              {state.isGameOver
+                ? `Final Score: ${state.score}`
+                : 'Press P to resume'}
+            </p>
+          </motion.div>
+        </div>
+      )}
+      {/* Mobile Stats and Next Piece Overlay */}
+      <div className="absolute right-4 top-4 flex flex-row gap-2 lg:hidden">
+        <div className="rounded-lg border border-border bg-background/80 p-2 backdrop-blur-sm">
+          <div className="text-xs text-muted-foreground">Next</div>
+          <div className="h-12 w-12">
+            {state.nextPiece && (
+              <div
+                className="relative h-full w-full"
+                style={{
+                  backgroundColor: state.nextPiece.powerUp
+                    ? state.nextPiece.powerUp.color + '40'
+                    : 'transparent'
+                }}
+              >
+                {state.nextPiece.shape.map((row, y) =>
+                  row.map(
+                    (cell, x) =>
+                      cell && (
+                        <div
+                          key={`${x}-${y}`}
+                          className="absolute"
+                          style={{
+                            width: `${100 / 4}%`,
+                            height: `${100 / 4}%`,
+                            left: `${(x * 100) / 4}%`,
+                            top: `${(y * 100) / 4}%`,
+                            backgroundColor: state.nextPiece?.color
+                          }}
+                        />
+                      )
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* Game Status Effects */}
+      <AnimatePresence>
+        {state.isTimeFrozen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute inset-0"
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/10 to-transparent" />
+          </motion.div>
+        )}
+
+        {state.isGhostMode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute inset-0"
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/10 to-transparent" />
+          </motion.div>
+        )}
       </AnimatePresence>
-    </motion.div>
+      {/* Level Up Animation */}
+      <AnimatePresence>
+        {state.level > 1 && (
+          <motion.div
+            key={state.level}
+            initial={{ scale: 2, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'backOut' }}
+            className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          >
+            <div className="text-4xl font-bold text-primary">
+              Level {state.level}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Score Popups */}
+      <AnimatePresence>
+        {clearedRows.length > 0 && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
+            <div className="rounded-lg border border-border bg-background/80 px-4 py-2 backdrop-blur-sm">
+              <div className="text-2xl font-bold">
+                {clearedRows.length === 4
+                  ? 'Tetris!'
+                  : `${clearedRows.length} Lines!`}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                +{calculateScore(clearedRows.length)} points
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Power-up Tutorial Hints */}
+      {state.currentPiece?.powerUp && !state.isPaused && !state.isGameOver && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg border border-border bg-background/80 px-4 py-2 backdrop-blur-sm"
+        >
+          <div className="flex items-center gap-2">
+            <state.currentPiece.powerUp.icon
+              className="size-4"
+              style={{ color: state.currentPiece.powerUp.color }}
+            />
+            <span className="text-sm">
+              {state.currentPiece.powerUp.description}
+            </span>
+          </div>
+        </motion.div>
+      )}
+    </div>
   )
+}
+
+// Helper function to calculate score
+function calculateScore(lines: number): number {
+  switch (lines) {
+    case 1:
+      return 100
+    case 2:
+      return 300
+    case 3:
+      return 500
+    case 4:
+      return 800
+    default:
+      return 0
+  }
 }

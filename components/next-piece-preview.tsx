@@ -92,8 +92,8 @@ export function NextPiecePreview({
 
           cells.push(
             <motion.div
-              key={`${x}-${y}`}
-              className="absolute rounded-sm border border-white/10"
+              key={`piece-${x}-${y}`}
+              className="absolute rounded-sm border border-foreground/10"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}

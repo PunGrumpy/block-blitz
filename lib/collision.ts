@@ -3,7 +3,8 @@ import { GamePiece, GameState } from '@/types/game'
 export function hasCollision(
   board: (string | null)[][],
   piece: GamePiece,
-  position = piece.position
+  position = piece.position,
+  isGhostMode = false
 ): boolean {
   const { shape } = piece
 
@@ -13,12 +14,13 @@ export function hasCollision(
         const newX = position.x + x
         const newY = position.y + y
 
-        if (
-          newX < 0 || // Left wall
-          newX >= board[0].length || // Right wall
-          newY >= board.length || // Floor
-          (newY >= 0 && board[newY][newX]) // Collision with placed pieces
-        ) {
+        // Always check boundaries
+        if (newX < 0 || newX >= board[0].length || newY >= board.length) {
+          return true
+        }
+
+        // In ghost mode, ignore collisions with other pieces
+        if (!isGhostMode && newY >= 0 && board[newY][newX] !== null) {
           return true
         }
       }
