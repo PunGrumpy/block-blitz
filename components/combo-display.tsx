@@ -1,8 +1,9 @@
 'use client'
 
-import React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Flame, Sparkles, Zap } from 'lucide-react'
+import React from 'react'
+
 import { ComboState } from '@/types/game'
 
 interface ComboDisplayProps {
@@ -66,7 +67,7 @@ export function ComboDisplay({ combo }: ComboDisplayProps) {
           exit="exit"
           className="absolute right-4 top-4 flex items-center gap-2 rounded-lg border border-primary/20 bg-background/80 p-2 backdrop-blur-sm"
         >
-          <ComboIcon className={`h-5 w-5 ${iconColor}`} />
+          <ComboIcon className={`size-5 ${iconColor}`} />
           <div className="flex flex-col">
             <motion.div animate={pulseAnimation} className="text-sm font-bold">
               {combo.count}x COMBO!

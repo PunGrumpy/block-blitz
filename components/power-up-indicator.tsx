@@ -1,7 +1,8 @@
 'use client'
 
-import { ActivePowerUp } from '@/types/power-ups'
 import { motion } from 'framer-motion'
+
+import { ActivePowerUp } from '@/types/power-ups'
 
 interface PowerUpIndicatorProps {
   powerUp: ActivePowerUp

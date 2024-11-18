@@ -3,14 +3,14 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
 
+import { ComboDisplay } from '@/components/combo-display'
 import { PowerUpIndicator } from '@/components/power-up-indicator'
 import { useGameLoop } from '@/hooks/use-game-loop'
+import { hasCollision } from '@/lib/collision'
 import { LinesClearedEffect } from '@/lib/effects'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
 import { PowerUp } from '@/types/power-ups'
-import { hasCollision } from '@/lib/collision'
-import { ComboDisplay } from '@/components/combo-display'
 
 // Animation variants
 const rowClearVariants = {

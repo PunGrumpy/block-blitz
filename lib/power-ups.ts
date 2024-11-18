@@ -1,6 +1,6 @@
-import { PowerUpType, PowerUp, ActivePowerUp } from '@/types/power-ups'
 import { POWER_UPS } from '@/constants/power-ups'
-import { GameState, GamePiece } from '@/types/game'
+import { GamePiece, GameState } from '@/types/game'
+import { ActivePowerUp, PowerUp, PowerUpType } from '@/types/power-ups'
 
 interface PowerUpState {
   lastGenerated: number
