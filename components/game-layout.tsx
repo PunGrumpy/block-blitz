@@ -204,11 +204,11 @@ export function GameLayout({ config }: GameLayoutProps) {
 
               <Button
                 variant="ghost"
-                className="h-8 px-2 sm:px-3"
+                className="hidden h-8 px-2 sm:flex sm:px-3"
                 aria-label={`Level ${state.level}`}
               >
                 <Crown className="mr-1 size-4 sm:mr-2" />
-                <span className="hidden sm:inline">Level {state.level}</span>
+                <span>Level {state.level}</span>
               </Button>
 
               <GameSettings
@@ -358,13 +358,19 @@ export function GameLayout({ config }: GameLayoutProps) {
           </Card>
           <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
             <div className="text-sm text-muted-foreground">Score</div>
-            <div className="font-mono text-lg">
+            <div className="flex items-center justify-center font-mono text-lg">
               {state.score.toLocaleString()}
             </div>
           </Card>
           <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
+            <div className="text-sm text-muted-foreground">Level</div>
+            <div className="flex items-center justify-center font-mono text-lg">
+              {state.level}
+            </div>
+          </Card>
+          <Card className="size-16 bg-background/80 p-2 backdrop-blur-sm">
             <div className="text-sm text-muted-foreground">Next</div>
-            <div className="">
+            <div>
               <NextPiecePreview piece={state.nextPiece} cellSize={12} />
             </div>
           </Card>
