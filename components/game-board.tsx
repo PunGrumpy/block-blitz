@@ -190,7 +190,7 @@ export function GameBoard({
 
   return (
     <motion.div
-      className={cn('relative aspect-[1/2] h-full', className)}
+      className={cn('relative aspect-[1/2] size-full', className)}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}

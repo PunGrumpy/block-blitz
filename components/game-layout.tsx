@@ -25,6 +25,7 @@ interface GameLayoutProps {
 export function GameLayout({ config }: GameLayoutProps) {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
+  const [isSidePanelOpen, setIsSidePanelOpen] = React.useState(false)
   const [settings, setSettings] = React.useState({
     audio: {
       enabled: true,
@@ -40,6 +41,7 @@ export function GameLayout({ config }: GameLayoutProps) {
 
   const { state, actions } = useGameState(config)
   const isMobile = useMediaQuery('(max-width: 768px)')
+  const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
   const prevLinesRef = React.useRef(state.lines)
 
   const sounds = useGameSound({
@@ -48,15 +50,7 @@ export function GameLayout({ config }: GameLayoutProps) {
     effects: settings.audio.effects
   })
 
-  // Auto-pause when any dialog is open
-  React.useEffect(() => {
-    const shouldPause = isHelpOpen || isSettingsOpen
-    if (shouldPause && !state.isPaused && !state.isGameOver) {
-      actions.togglePause()
-    }
-  }, [isHelpOpen, isSettingsOpen, state.isPaused, state.isGameOver, actions])
-
-  // Create wrapped actions that play sounds
+  // Game actions with sound effects
   const gameActions = React.useMemo(
     () => ({
       moveLeft: () => {
@@ -90,7 +84,6 @@ export function GameLayout({ config }: GameLayoutProps) {
         }
       },
       togglePause: () => {
-        // Only allow pause toggle if no dialogs are open
         if (!isHelpOpen && !isSettingsOpen && !state.isGameOver) {
           actions.togglePause()
         }
@@ -99,6 +92,7 @@ export function GameLayout({ config }: GameLayoutProps) {
         actions.reset()
         setIsHelpOpen(false)
         setIsSettingsOpen(false)
+        setIsSidePanelOpen(false)
       }
     }),
     [
@@ -111,7 +105,7 @@ export function GameLayout({ config }: GameLayoutProps) {
     ]
   )
 
-  // Handle sounds for game events
+  // Handle game sounds
   React.useEffect(() => {
     if (state.lines > prevLinesRef.current) {
       sounds.playClear()
@@ -125,58 +119,74 @@ export function GameLayout({ config }: GameLayoutProps) {
     }
   }, [state.isGameOver, sounds])
 
-  // Only enable keyboard controls when no dialogs are open
-  const keyboardEnabled = !isHelpOpen && !isSettingsOpen && !state.isGameOver
-
+  // Keyboard controls
   useKeyboard(gameActions, {
     repeatDelay: 200,
     repeatInterval: 50,
-    enabled: keyboardEnabled
+    enabled: !isHelpOpen && !isSettingsOpen && !state.isGameOver
   })
 
-  const handleSettingsOpen = React.useCallback((open: boolean) => {
-    setIsSettingsOpen(open)
-  }, [])
-
   return (
-    <div className="mx-auto flex max-w-screen-xl flex-col overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
       {/* Header */}
-      <header className="flex h-[8vh] items-center border-b border-border">
-        <div className="flex flex-1 items-center justify-between">
-          <h1 className="font-mono text-xl font-bold">Block Blitz</h1>
-          <div className="flex items-center gap-4">
-            <div className="font-mono">
+      <header className="flex h-[8vh] min-h-12 items-center border-b border-border px-4 md:px-6">
+        <div className="flex w-full items-center justify-between gap-4">
+          <h1 className="truncate font-mono text-lg font-bold sm:text-xl">
+            Block Blitz
+          </h1>
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden font-mono sm:block">
               Score: {state.score.toLocaleString()}
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" className="h-8">
-                <Timer className="mr-2 size-4" />
-                {Math.floor(state.timeLeft / 60)}:
-                {String(Math.floor(state.timeLeft % 60)).padStart(2, '0')}
+
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button
+                variant="ghost"
+                className="hidden h-8 px-2 sm:flex sm:px-3"
+                aria-label={`Time left: ${Math.floor(state.timeLeft / 60)}:${String(Math.floor(state.timeLeft % 60)).padStart(2, '0')}`}
+              >
+                <Timer className="mr-1 size-4 sm:mr-2" />
+                <span>
+                  {Math.floor(state.timeLeft / 60)}:
+                  {String(Math.floor(state.timeLeft % 60)).padStart(2, '0')}
+                </span>
               </Button>
-              <Button variant="ghost" className="h-8">
-                <Crown className="mr-2 size-4" />
-                Level {state.level}
+
+              <Button
+                variant="ghost"
+                className="h-8 px-2 sm:px-3"
+                aria-label={`Level ${state.level}`}
+              >
+                <Crown className="mr-1 size-4 sm:mr-2" />
+                <span className="hidden sm:inline">Level {state.level}</span>
               </Button>
+
               <GameSettings
                 settings={settings}
                 onSettingsChange={setSettings}
                 open={isSettingsOpen}
-                onOpenChange={handleSettingsOpen}
+                onOpenChange={setIsSettingsOpen}
               />
+
               <Button
                 variant="ghost"
                 onClick={() => setIsHelpOpen(true)}
                 size="icon"
+                className="size-8"
                 disabled={state.isGameOver}
+                aria-label="Help"
               >
                 <HelpCircle className="size-4" />
               </Button>
+
               <Button
                 variant="ghost"
                 onClick={gameActions.togglePause}
                 size="icon"
+                className="size-8"
                 disabled={state.isGameOver || isHelpOpen || isSettingsOpen}
+                aria-label={state.isPaused ? 'Resume game' : 'Pause game'}
               >
                 {state.isPaused ? (
                   <PlayIcon className="size-4" />
@@ -190,10 +200,10 @@ export function GameLayout({ config }: GameLayoutProps) {
       </header>
 
       {/* Main Game Area */}
-      <div className="flex h-[92vh] items-center justify-center gap-20 p-6">
+      <div className="relative flex h-[92vh] w-full flex-1 items-center justify-center gap-4 overflow-hidden p-4 md:gap-8 lg:gap-12">
         {/* Game Board */}
-        <div className="aspect-[1/2] h-full max-h-[92vh]">
-          <Card className="relative h-full bg-background p-4">
+        <div className="relative size-full max-h-[calc(82vh-12vh)] max-w-screen-lg md:max-h-[92vh] md:w-auto">
+          <Card className="relative h-full bg-background p-2 sm:p-4">
             <GameBoard
               state={state}
               showGhost={settings.display.showGhost}
@@ -204,9 +214,8 @@ export function GameLayout({ config }: GameLayoutProps) {
           </Card>
         </div>
 
-        {/* Side Panel */}
-        <div className="flex h-full w-72 flex-col gap-4">
-          {/* Next Piece Preview */}
+        {/* Side Panel - Desktop */}
+        <div className="hidden h-full w-72 flex-col gap-4 lg:flex">
           <Card className="p-4">
             <h2 className="mb-2 font-mono font-medium">Next Piece</h2>
             <div className="h-40">
@@ -214,7 +223,6 @@ export function GameLayout({ config }: GameLayoutProps) {
             </div>
           </Card>
 
-          {/* Statistics */}
           <Card className="p-4">
             <h2 className="mb-2 font-mono font-medium">Statistics</h2>
             <div className="grid grid-cols-2 gap-4">
@@ -231,7 +239,6 @@ export function GameLayout({ config }: GameLayoutProps) {
             </div>
           </Card>
 
-          {/* Controls */}
           <Card className="flex-1 p-4">
             <h2 className="mb-2 font-mono font-medium">Controls</h2>
             <div className="space-y-2">
@@ -287,8 +294,33 @@ export function GameLayout({ config }: GameLayoutProps) {
           disabled={
             state.isPaused || state.isGameOver || isHelpOpen || isSettingsOpen
           }
-          className="bottom-0"
+          className="fixed inset-x-0 bottom-0 z-50"
         />
+      )}
+
+      {/* Mobile Stats Overlay */}
+      {isMobile && (
+        <div className="absolute left-4 top-[10vh] z-10 flex flex-row gap-2">
+          <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
+            <div className="text-sm text-muted-foreground">Time</div>
+            <div className="font-mono text-lg">
+              {Math.floor(state.timeLeft / 60)}:
+              {String(Math.floor(state.timeLeft % 60)).padStart(2, '0')}
+            </div>
+          </Card>
+          <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
+            <div className="text-sm text-muted-foreground">Score</div>
+            <div className="font-mono text-lg">
+              {state.score.toLocaleString()}
+            </div>
+          </Card>
+          <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
+            <div className="text-sm text-muted-foreground">Next</div>
+            <div className="">
+              <NextPiecePreview piece={state.nextPiece} cellSize={12} />
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* Dialogs */}
