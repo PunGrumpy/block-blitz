@@ -20,15 +20,42 @@ export function createPowerUpPiece(type: PowerUpType): GamePiece {
 }
 
 export function shouldGeneratePowerUp(score: number): boolean {
-  // Increase power-up frequency with score
-  const baseChance = 0.05 // 5% base chance
-  const scoreMultiplier = Math.floor(score / 1000) * 0.01 // +1% per 1000 points
-  return Math.random() < baseChance + scoreMultiplier
+  // Base chances per power-up type
+  const POWER_UP_CHANCES = {
+    [PowerUpType.COLOR_BOMB]: 0.02, // 2% base chance
+    [PowerUpType.LINE_BLAST]: 0.03, // 3% base chance
+    [PowerUpType.TIME_FREEZE]: 0.015, // 1.5% base chance
+    [PowerUpType.GHOST_BLOCK]: 0.015, // 1.5% base chance
+    [PowerUpType.SHUFFLE]: 0.01 // 1% base chance
+  }
+
+  const baseChance = Object.values(POWER_UP_CHANCES).reduce((a, b) => a + b, 0)
+  const scoreBonus = Math.min(0.15, Math.floor(score / 500) * 0.01) // Caps at 15% bonus
+  const levelBonus = Math.floor(score / 1000) * 0.02 // +2% per level
+
+  return Math.random() < baseChance + scoreBonus + levelBonus
 }
 
 export function getRandomPowerUpType(): PowerUpType {
-  const types = Object.values(PowerUpType)
-  return types[Math.floor(Math.random() * types.length)]
+  const weights = {
+    [PowerUpType.COLOR_BOMB]: 20,
+    [PowerUpType.LINE_BLAST]: 30,
+    [PowerUpType.TIME_FREEZE]: 15,
+    [PowerUpType.GHOST_BLOCK]: 15,
+    [PowerUpType.SHUFFLE]: 10
+  }
+
+  const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0)
+  let random = Math.random() * totalWeight
+
+  for (const [type, weight] of Object.entries(weights)) {
+    random -= weight
+    if (random <= 0) {
+      return type as PowerUpType
+    }
+  }
+
+  return PowerUpType.LINE_BLAST // Fallback
 }
 
 export function activatePowerUp(
