@@ -1,6 +1,6 @@
 import { PowerUpType, PowerUp, ActivePowerUp } from '@/types/power-ups'
 import { POWER_UPS } from '@/constants/power-ups'
-import { GameState, GamePiece } from '@/types/game'
+import { GameState, GamePiece, Position } from '@/types/game'
 
 export function createPowerUpPiece(type: PowerUpType): GamePiece {
   const powerUp = POWER_UPS[type]
@@ -57,24 +57,97 @@ export function activatePowerUp(
 }
 
 export function handleColorBomb(state: GameState): Partial<GameState> {
-  const targetColor = state.currentPiece?.color
-  if (!targetColor) return {}
-
+  const newBoard = state.board.map(row => [...row])
   let blocksCleared = 0
-  const newBoard = state.board.map(row =>
-    row.map(cell => {
-      // Match any non-null cell (all blocks) for color bomb
-      if (cell !== null) {
-        blocksCleared++
-        return null
+  let explosionRadius = 2 // Radius of explosion effect
+
+  // Find center of explosion (piece position)
+  const centerX = state.currentPiece?.position.x ?? 0
+  const centerY = state.currentPiece?.position.y ?? 0
+
+  // First wave: Clear immediate blocks
+  for (let y = 0; y < newBoard.length; y++) {
+    for (let x = 0; x < newBoard[0].length; x++) {
+      if (newBoard[y][x] !== null) {
+        // Calculate distance from explosion center
+        const distance = Math.sqrt(
+          Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
+        )
+
+        // Clear blocks in waves
+        if (distance <= explosionRadius) {
+          newBoard[y][x] = null
+          blocksCleared++
+        }
       }
-      return cell
-    })
-  )
+    }
+  }
+
+  // Second wave: Chain reaction - clear adjacent blocks
+  let moreBlocksCleared = true
+  let chainReactionMultiplier = 1
+
+  while (moreBlocksCleared && chainReactionMultiplier < 4) {
+    moreBlocksCleared = false
+    const blocksToClear: Position[] = []
+
+    // Find blocks to clear in this wave
+    for (let y = 0; y < newBoard.length; y++) {
+      for (let x = 0; x < newBoard[0].length; x++) {
+        if (newBoard[y][x] !== null) {
+          // Check if block has adjacent empty space (cleared block)
+          const hasAdjacentClear = [
+            [0, 1],
+            [0, -1],
+            [1, 0],
+            [-1, 0]
+          ].some(([dx, dy]) => {
+            const newX = x + dx
+            const newY = y + dy
+            return (
+              newX >= 0 &&
+              newX < newBoard[0].length &&
+              newY >= 0 &&
+              newY < newBoard.length &&
+              newBoard[newY][newX] === null
+            )
+          })
+
+          if (hasAdjacentClear) {
+            blocksToClear.push({ x, y })
+          }
+        }
+      }
+    }
+
+    // Clear blocks for this wave
+    if (blocksToClear.length > 0) {
+      moreBlocksCleared = true
+      blocksToClear.forEach(({ x, y }) => {
+        newBoard[y][x] = null
+        blocksCleared += chainReactionMultiplier
+      })
+      chainReactionMultiplier += 0.5
+    }
+  }
+
+  // Make blocks fall after explosion
+  for (let x = 0; x < newBoard[0].length; x++) {
+    let writePos = newBoard.length - 1
+    for (let y = newBoard.length - 1; y >= 0; y--) {
+      if (newBoard[y][x] !== null) {
+        if (writePos !== y) {
+          newBoard[writePos][x] = newBoard[y][x]
+          newBoard[y][x] = null
+        }
+        writePos--
+      }
+    }
+  }
 
   return {
     board: newBoard,
-    score: state.score + blocksCleared * 100
+    score: state.score + blocksCleared * 150 // Increased score for chain reactions
   }
 }
 
