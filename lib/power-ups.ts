@@ -1,6 +1,119 @@
 import { PowerUpType, PowerUp, ActivePowerUp } from '@/types/power-ups'
 import { POWER_UPS } from '@/constants/power-ups'
-import { GameState, GamePiece, Position } from '@/types/game'
+import { GameState, GamePiece } from '@/types/game'
+
+interface PowerUpState {
+  lastGenerated: number
+  consecutiveCount: number
+}
+
+const POWER_UP_CONFIG = {
+  BASE_CHANCE: 0.085,
+  MIN_CHANCE: 0.02,
+  MAX_CHANCE: 0.25,
+  SCORE_BONUS_INTERVAL: 500,
+  SCORE_BONUS_CAP: 0.15,
+  LEVEL_BONUS: 0.02,
+  COOLDOWN: 5000,
+  CONSECUTIVE_PENALTY: 0.5
+} as const
+
+const POWER_UP_WEIGHTS = {
+  [PowerUpType.COLOR_BOMB]: {
+    weight: 15,
+    minLevel: 2,
+    scoreRequirement: 1000
+  },
+  [PowerUpType.LINE_BLAST]: {
+    weight: 25,
+    minLevel: 1,
+    scoreRequirement: 0
+  },
+  [PowerUpType.TIME_FREEZE]: {
+    weight: 20,
+    minLevel: 3,
+    scoreRequirement: 2000
+  },
+  [PowerUpType.GHOST_BLOCK]: {
+    weight: 20,
+    minLevel: 4,
+    scoreRequirement: 3000
+  },
+  [PowerUpType.SHUFFLE]: {
+    weight: 10,
+    minLevel: 5,
+    scoreRequirement: 4000
+  }
+} as const
+
+const powerUpState: PowerUpState = {
+  lastGenerated: 0,
+  consecutiveCount: 0
+}
+
+export function shouldGeneratePowerUp(score: number, level: number): boolean {
+  const now = Date.now()
+
+  if (now - powerUpState.lastGenerated < POWER_UP_CONFIG.COOLDOWN) {
+    return false
+  }
+
+  let chance =
+    POWER_UP_CONFIG.BASE_CHANCE *
+    Math.pow(POWER_UP_CONFIG.CONSECUTIVE_PENALTY, powerUpState.consecutiveCount)
+
+  const scoreBonus = Math.min(
+    POWER_UP_CONFIG.SCORE_BONUS_CAP,
+    Math.floor(score / POWER_UP_CONFIG.SCORE_BONUS_INTERVAL) * 0.01
+  )
+
+  const levelBonus = (level - 1) * POWER_UP_CONFIG.LEVEL_BONUS
+
+  chance = Math.max(
+    POWER_UP_CONFIG.MIN_CHANCE,
+    Math.min(POWER_UP_CONFIG.MAX_CHANCE, chance + scoreBonus + levelBonus)
+  )
+
+  const shouldGenerate = Math.random() < chance
+
+  if (shouldGenerate) {
+    powerUpState.lastGenerated = now
+    powerUpState.consecutiveCount++
+  } else {
+    powerUpState.consecutiveCount = Math.max(
+      0,
+      powerUpState.consecutiveCount - 1
+    )
+  }
+
+  return shouldGenerate
+}
+
+export function getRandomPowerUpType(
+  level: number,
+  score: number
+): PowerUpType {
+  const availablePowerUps = Object.entries(POWER_UP_WEIGHTS).filter(
+    ([_, config]) =>
+      config.minLevel <= level && score >= config.scoreRequirement
+  )
+
+  const totalWeight = availablePowerUps.reduce(
+    (sum, [_, config]) => sum + config.weight,
+    0
+  )
+
+  let random = Math.random() * totalWeight
+
+  for (const [type, config] of availablePowerUps) {
+    random -= config.weight
+    if (random <= 0) {
+      return type as PowerUpType
+    }
+  }
+
+  return PowerUpType.LINE_BLAST
+}
 
 export function createPowerUpPiece(type: PowerUpType): GamePiece {
   const powerUp = POWER_UPS[type]
@@ -15,47 +128,8 @@ export function createPowerUpPiece(type: PowerUpType): GamePiece {
       y: 0
     },
     rotation: 0,
-    powerUp: powerUp
+    powerUp
   }
-}
-
-export function shouldGeneratePowerUp(score: number): boolean {
-  // Base chances per power-up type
-  const POWER_UP_CHANCES = {
-    [PowerUpType.COLOR_BOMB]: 0.02, // 2% base chance
-    [PowerUpType.LINE_BLAST]: 0.03, // 3% base chance
-    [PowerUpType.TIME_FREEZE]: 0.015, // 1.5% base chance
-    [PowerUpType.GHOST_BLOCK]: 0.015, // 1.5% base chance
-    [PowerUpType.SHUFFLE]: 0.01 // 1% base chance
-  }
-
-  const baseChance = Object.values(POWER_UP_CHANCES).reduce((a, b) => a + b, 0)
-  const scoreBonus = Math.min(0.15, Math.floor(score / 500) * 0.01) // Caps at 15% bonus
-  const levelBonus = Math.floor(score / 1000) * 0.02 // +2% per level
-
-  return Math.random() < baseChance + scoreBonus + levelBonus
-}
-
-export function getRandomPowerUpType(): PowerUpType {
-  const weights = {
-    [PowerUpType.COLOR_BOMB]: 20,
-    [PowerUpType.LINE_BLAST]: 30,
-    [PowerUpType.TIME_FREEZE]: 15,
-    [PowerUpType.GHOST_BLOCK]: 15,
-    [PowerUpType.SHUFFLE]: 10
-  }
-
-  const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0)
-  let random = Math.random() * totalWeight
-
-  for (const [type, weight] of Object.entries(weights)) {
-    random -= weight
-    if (random <= 0) {
-      return type as PowerUpType
-    }
-  }
-
-  return PowerUpType.LINE_BLAST // Fallback
 }
 
 export function activatePowerUp(
@@ -83,26 +157,68 @@ export function activatePowerUp(
   }
 }
 
+export function handlePowerUpEffects(state: GameState): Partial<GameState> {
+  const now = Date.now()
+  const activePowerUps = state.activePowerUps.filter(
+    powerUp => powerUp.endTime > now
+  )
+
+  const effects: Partial<GameState> = {
+    activePowerUps,
+    isTimeFrozen: false,
+    isGhostMode: false
+  }
+
+  activePowerUps.forEach(powerUp => {
+    switch (powerUp.type) {
+      case PowerUpType.TIME_FREEZE:
+        effects.isTimeFrozen = true
+        break
+      case PowerUpType.GHOST_BLOCK:
+        effects.isGhostMode = true
+        break
+    }
+  })
+
+  return effects
+}
+
+export function resetPowerUpState(): void {
+  powerUpState.lastGenerated = 0
+  powerUpState.consecutiveCount = 0
+}
+
+// Constants for power-up effects
+const POWER_UP_EFFECTS = {
+  COLOR_BOMB: {
+    radius: 2,
+    chainReactionLimit: 4,
+    pointsPerBlock: 150,
+    chainMultiplierIncrease: 0.5
+  },
+  LINE_BLAST: {
+    pointsPerBlock: 50
+  },
+  SHUFFLE: {
+    basePoints: 100
+  }
+} as const
+
 export function handleColorBomb(state: GameState): Partial<GameState> {
   const newBoard = state.board.map(row => [...row])
   let blocksCleared = 0
-  let explosionRadius = 2 // Radius of explosion effect
-
-  // Find center of explosion (piece position)
   const centerX = state.currentPiece?.position.x ?? 0
   const centerY = state.currentPiece?.position.y ?? 0
+  let chainReactionMultiplier = 1
 
-  // First wave: Clear immediate blocks
+  // Initial explosion
   for (let y = 0; y < newBoard.length; y++) {
     for (let x = 0; x < newBoard[0].length; x++) {
       if (newBoard[y][x] !== null) {
-        // Calculate distance from explosion center
         const distance = Math.sqrt(
           Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
         )
-
-        // Clear blocks in waves
-        if (distance <= explosionRadius) {
+        if (distance <= POWER_UP_EFFECTS.COLOR_BOMB.radius) {
           newBoard[y][x] = null
           blocksCleared++
         }
@@ -110,55 +226,38 @@ export function handleColorBomb(state: GameState): Partial<GameState> {
     }
   }
 
-  // Second wave: Chain reaction - clear adjacent blocks
+  // Chain reactions
+  let chainCount = 0
   let moreBlocksCleared = true
-  let chainReactionMultiplier = 1
 
-  while (moreBlocksCleared && chainReactionMultiplier < 4) {
+  while (
+    moreBlocksCleared &&
+    chainCount < POWER_UP_EFFECTS.COLOR_BOMB.chainReactionLimit
+  ) {
     moreBlocksCleared = false
     const blocksToClear: Position[] = []
 
-    // Find blocks to clear in this wave
     for (let y = 0; y < newBoard.length; y++) {
       for (let x = 0; x < newBoard[0].length; x++) {
-        if (newBoard[y][x] !== null) {
-          // Check if block has adjacent empty space (cleared block)
-          const hasAdjacentClear = [
-            [0, 1],
-            [0, -1],
-            [1, 0],
-            [-1, 0]
-          ].some(([dx, dy]) => {
-            const newX = x + dx
-            const newY = y + dy
-            return (
-              newX >= 0 &&
-              newX < newBoard[0].length &&
-              newY >= 0 &&
-              newY < newBoard.length &&
-              newBoard[newY][newX] === null
-            )
-          })
-
-          if (hasAdjacentClear) {
-            blocksToClear.push({ x, y })
-          }
+        if (newBoard[y][x] !== null && hasAdjacentClear(newBoard, x, y)) {
+          blocksToClear.push({ x, y })
         }
       }
     }
 
-    // Clear blocks for this wave
     if (blocksToClear.length > 0) {
       moreBlocksCleared = true
       blocksToClear.forEach(({ x, y }) => {
         newBoard[y][x] = null
         blocksCleared += chainReactionMultiplier
       })
-      chainReactionMultiplier += 0.5
+      chainReactionMultiplier +=
+        POWER_UP_EFFECTS.COLOR_BOMB.chainMultiplierIncrease
+      chainCount++
     }
   }
 
-  // Make blocks fall after explosion
+  // Make blocks fall
   for (let x = 0; x < newBoard[0].length; x++) {
     let writePos = newBoard.length - 1
     for (let y = newBoard.length - 1; y >= 0; y--) {
@@ -174,7 +273,8 @@ export function handleColorBomb(state: GameState): Partial<GameState> {
 
   return {
     board: newBoard,
-    score: state.score + blocksCleared * 150 // Increased score for chain reactions
+    score:
+      state.score + blocksCleared * POWER_UP_EFFECTS.COLOR_BOMB.pointsPerBlock
   }
 }
 
@@ -183,16 +283,13 @@ export function handleLineBlast(state: GameState): Partial<GameState> {
 
   const y = state.currentPiece.position.y
   const x = state.currentPiece.position.x
-
-  // Deep copy the board
   const newBoard = state.board.map(row => [...row])
   let blocksCleared = 0
 
-  // Clear entire row
+  // Clear row and column
   blocksCleared += newBoard[y].filter(cell => cell !== null).length
   newBoard[y] = Array(state.board[0].length).fill(null)
 
-  // Clear entire column
   for (let row = 0; row < newBoard.length; row++) {
     if (newBoard[row][x] !== null) {
       blocksCleared++
@@ -200,7 +297,7 @@ export function handleLineBlast(state: GameState): Partial<GameState> {
     }
   }
 
-  // Make blocks fall after clearing
+  // Make blocks fall
   for (let col = 0; col < newBoard[0].length; col++) {
     let writePos = newBoard.length - 1
     for (let row = newBoard.length - 1; row >= 0; row--) {
@@ -216,19 +313,19 @@ export function handleLineBlast(state: GameState): Partial<GameState> {
 
   return {
     board: newBoard,
-    score: state.score + blocksCleared * 50
+    score:
+      state.score + blocksCleared * POWER_UP_EFFECTS.LINE_BLAST.pointsPerBlock
   }
 }
 
 export function handleShuffle(state: GameState): Partial<GameState> {
-  // Collect non-null cells while preserving vertical order
   const cellsByColumn: { cell: string | null; y: number }[][] = Array(
     state.board[0].length
   )
     .fill(null)
     .map(() => [])
 
-  // Group cells by column maintaining vertical order
+  // Group cells by column
   for (let x = 0; x < state.board[0].length; x++) {
     for (let y = state.board.length - 1; y >= 0; y--) {
       const cell = state.board[y][x]
@@ -238,18 +335,18 @@ export function handleShuffle(state: GameState): Partial<GameState> {
     }
   }
 
-  // Shuffle column positions only
+  // Shuffle column positions
   const shuffledColumnIndices = Array.from(
     { length: state.board[0].length },
     (_, i) => i
   ).sort(() => Math.random() - 0.5)
 
-  // Create new empty board
+  // Create new board
   const newBoard: (string | null)[][] = Array(state.board.length)
     .fill(null)
     .map(() => Array(state.board[0].length).fill(null))
 
-  // Place blocks in shuffled columns while maintaining stacking
+  // Place blocks in shuffled positions
   shuffledColumnIndices.forEach((newX, originalX) => {
     const column = cellsByColumn[originalX]
     let bottomY = state.board.length - 1
@@ -262,47 +359,36 @@ export function handleShuffle(state: GameState): Partial<GameState> {
 
   return {
     board: newBoard,
-    score: state.score + 100
+    score: state.score + POWER_UP_EFFECTS.SHUFFLE.basePoints
   }
 }
 
-export function updatePowerUps(state: GameState): Partial<GameState> {
-  const now = Date.now()
-  const activePowerUps = state.activePowerUps.filter(powerUp => {
-    const isActive = powerUp.endTime > now
-    // Clear effects when power-up expires
-    if (!isActive && powerUp.type === PowerUpType.GHOST_BLOCK) {
-      return {
-        ...state,
-        isGhostMode: false,
-        currentPiece: state.currentPiece
-          ? {
-              ...state.currentPiece,
-              powerUp: undefined
-            }
-          : null
-      }
-    }
-    return isActive
-  })
+function hasAdjacentClear(
+  board: (string | null)[][],
+  x: number,
+  y: number
+): boolean {
+  const directions = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0]
+  ]
 
-  // Update power-up states
-  const powerUpStates = { ...state.powerUpStates }
-  activePowerUps.forEach(powerUp => {
-    powerUpStates[powerUp.type] = {
-      isActive: true,
-      remainingDuration: (powerUp.endTime - now) / 1000
-    }
-  })
-
-  return {
-    activePowerUps,
-    powerUpStates,
-    isTimeFrozen: activePowerUps.some(
-      powerUp => powerUp.type === PowerUpType.TIME_FREEZE
-    ),
-    isGhostMode: activePowerUps.some(
-      powerUp => powerUp.type === PowerUpType.GHOST_BLOCK
+  return directions.some(([dx, dy]) => {
+    const newX = x + dx
+    const newY = y + dy
+    return (
+      newX >= 0 &&
+      newX < board[0].length &&
+      newY >= 0 &&
+      newY < board.length &&
+      board[newY][newX] === null
     )
-  }
+  })
+}
+
+interface Position {
+  x: number
+  y: number
 }
