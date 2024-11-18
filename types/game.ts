@@ -1,3 +1,5 @@
+import { ActivePowerUp, PowerUp } from '@/types/power-ups'
+
 // Board Types
 export interface Position {
   x: number
@@ -15,6 +17,7 @@ export interface GamePiece {
   color: string
   position: Position
   rotation: number
+  powerUp?: PowerUp
 }
 
 // Game Configuration
@@ -63,6 +66,11 @@ export interface GameState {
   // Combo system
   combo: number
   lastComboTime: number
+
+  // Active power-ups
+  activePowerUps: ActivePowerUp[]
+  isTimeFrozen: boolean
+  isGhostMode: boolean
 }
 
 // Scoring System
