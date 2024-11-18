@@ -25,7 +25,6 @@ interface GameLayoutProps {
 export function GameLayout({ config }: GameLayoutProps) {
   const [isHelpOpen, setIsHelpOpen] = React.useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
-  const [isSidePanelOpen, setIsSidePanelOpen] = React.useState(false)
   const [settings, setSettings] = React.useState({
     audio: {
       enabled: true,
@@ -41,7 +40,6 @@ export function GameLayout({ config }: GameLayoutProps) {
 
   const { state, actions } = useGameState(config)
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)')
   const prevLinesRef = React.useRef(state.lines)
 
   const sounds = useGameSound({
@@ -92,7 +90,6 @@ export function GameLayout({ config }: GameLayoutProps) {
         actions.reset()
         setIsHelpOpen(false)
         setIsSettingsOpen(false)
-        setIsSidePanelOpen(false)
       }
     }),
     [
