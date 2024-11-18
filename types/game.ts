@@ -25,6 +25,15 @@ export interface GamePiece {
   powerUp?: PowerUp
 }
 
+// Combo System
+export interface ComboState {
+  count: number
+  lastTime: number
+  multiplier: number
+  isActive: boolean
+  timeWindow: number
+}
+
 // Game Configuration
 export interface GameConfig {
   boardWidth: number
@@ -69,8 +78,7 @@ export interface GameState {
   lastTick: number
 
   // Combo system
-  combo: number
-  lastComboTime: number
+  combo: ComboState
 
   // Active power-ups
   activePowerUps: ActivePowerUp[]

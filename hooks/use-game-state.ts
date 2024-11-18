@@ -4,7 +4,8 @@ import {
   GameAction,
   GameConfig,
   Position,
-  GamePiece
+  GamePiece,
+  ComboState
 } from '@/types/game'
 import { getRandomPiece, rotatePiece } from '@/lib/pieces'
 import {
@@ -27,6 +28,21 @@ import {
 } from '@/lib/power-ups'
 import { PowerUpType } from '@/types/power-ups'
 
+const COMBO_CONFIG = {
+  BASE_MULTIPLIER: 1.5,
+  MAX_MULTIPLIER: 8,
+  TIME_WINDOW: 5000, // 5 seconds
+  GROWTH_RATE: 1.5
+} as const
+
+const INITIAL_COMBO_STATE: ComboState = {
+  count: 0,
+  lastTime: Date.now(),
+  multiplier: 1,
+  isActive: false,
+  timeWindow: COMBO_CONFIG.TIME_WINDOW
+}
+
 const INITIAL_STATE: GameState = {
   board: Array(20)
     .fill(null)
@@ -40,8 +56,7 @@ const INITIAL_STATE: GameState = {
   isPaused: false,
   timeLeft: 180,
   lastTick: Date.now(),
-  combo: 0,
-  lastComboTime: Date.now(),
+  combo: INITIAL_COMBO_STATE,
   activePowerUps: [],
   isTimeFrozen: false,
   isGhostMode: false,
@@ -54,42 +69,10 @@ const INITIAL_STATE: GameState = {
   }
 }
 
-export function isValidMove(
-  board: (string | null)[][],
-  piece: GamePiece,
-  newPosition: Position,
-  gameState: GameState
-): boolean {
-  // Ghost mode allows passing through other pieces but not boundaries
-  if (gameState.isGhostMode) {
-    return piece.shape.every((row, y) =>
-      row.every((isSet, x) => {
-        if (!isSet) return true
-        const newX = newPosition.x + x
-        const newY = newPosition.y + y
-        return (
-          newX >= 0 &&
-          newX < board[0].length &&
-          newY >= 0 &&
-          newY < board.length
-        )
-      })
-    )
-  }
-
-  // Normal collision check
-  return !piece.shape.some((row, y) =>
-    row.some((isSet, x) => {
-      if (!isSet) return false
-      const newX = newPosition.x + x
-      const newY = newPosition.y + y
-      return (
-        newX < 0 ||
-        newX >= board[0].length ||
-        newY >= board.length ||
-        (newY >= 0 && board[newY][newX] !== null)
-      )
-    })
+function calculateComboMultiplier(count: number): number {
+  return Math.min(
+    Math.pow(COMBO_CONFIG.BASE_MULTIPLIER, count),
+    COMBO_CONFIG.MAX_MULTIPLIER
   )
 }
 
@@ -98,11 +81,10 @@ function calculateScore(
   dropDistance: number = 0,
   isSoftDrop: boolean = false,
   level: number = 1,
-  powerUpBonus: number = 0
+  comboMultiplier: number = 1
 ): number {
   let score = 0
 
-  // Calculate line clear score
   switch (linesCleared) {
     case 1:
       score += SCORING.singleLine
@@ -120,24 +102,25 @@ function calculateScore(
 
   // Add drop bonus
   if (dropDistance > 0) {
-    score += Math.floor(
-      dropDistance * (isSoftDrop ? SCORING.softDrop : SCORING.hardDrop)
-    )
+    score += dropDistance * (isSoftDrop ? SCORING.softDrop : SCORING.hardDrop)
   }
 
-  // Add power-up bonus
-  score += powerUpBonus
+  // Apply combo multiplier
+  score = Math.floor(score * comboMultiplier)
 
   // Level multiplier (10% increase per level)
   score = Math.floor(score * (1 + (level - 1) * 0.1))
 
-  return Math.floor(score)
+  return score
 }
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   if (state.isGameOver && action.type !== 'RESET') return state
   if (state.isPaused && !['TOGGLE_PAUSE', 'RESET'].includes(action.type))
     return state
+
+  const now = Date.now()
+  const isComboActive = now - state.combo.lastTime < state.combo.timeWindow
 
   switch (action.type) {
     case 'MOVE_LEFT': {
@@ -233,9 +216,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                 ...state.activePowerUps,
                 {
                   ...state.currentPiece.powerUp,
-                  startTime: Date.now(),
-                  endTime:
-                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                  startTime: now,
+                  endTime: now + state.currentPiece.powerUp.duration * 1000
                 }
               ]
             }
@@ -247,9 +229,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                 ...state.activePowerUps,
                 {
                   ...state.currentPiece.powerUp,
-                  startTime: Date.now(),
-                  endTime:
-                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                  startTime: now,
+                  endTime: now + state.currentPiece.powerUp.duration * 1000
                 }
               ]
             }
@@ -273,12 +254,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const newBoard = mergePieceToBoard(state.board, state.currentPiece)
       const fullRows = findFullRows(newBoard)
       const updatedBoard = clearRows(newBoard, fullRows)
-      const additionalScore = calculateScore(
-        fullRows.length,
-        0,
-        false,
-        state.level
-      )
 
       if (isGameOver({ ...state, board: updatedBoard })) {
         return {
@@ -288,29 +263,42 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
-      const now = Date.now()
-      const isCombo =
-        fullRows.length > 0 &&
-        now - state.lastComboTime < SCORING.combo.timeWindow
-      const comboMultiplier = isCombo
-        ? Math.pow(SCORING.combo.multiplier, state.combo)
-        : 1
-      const finalScore = Math.floor(
-        state.score + additionalScore * comboMultiplier
+      // Update combo state
+      const newCombo =
+        fullRows.length > 0
+          ? {
+              count: isComboActive ? state.combo.count + 1 : 1,
+              lastTime: now,
+              multiplier: calculateComboMultiplier(
+                isComboActive ? state.combo.count + 1 : 1
+              ),
+              isActive: true,
+              timeWindow: COMBO_CONFIG.TIME_WINDOW
+            }
+          : {
+              ...INITIAL_COMBO_STATE,
+              lastTime: now
+            }
+
+      const score = calculateScore(
+        fullRows.length,
+        0,
+        false,
+        state.level,
+        newCombo.multiplier
       )
 
       return {
         ...state,
         board: updatedBoard,
         currentPiece: state.nextPiece,
-        nextPiece: shouldGeneratePowerUp(finalScore)
+        nextPiece: shouldGeneratePowerUp(state.score + score)
           ? createPowerUpPiece(getRandomPowerUpType())
           : getRandomPiece(),
-        score: finalScore,
+        score: state.score + score,
         lines: state.lines + fullRows.length,
         level: Math.floor((state.lines + fullRows.length) / 10) + 1,
-        combo: isCombo ? state.combo + 1 : 0,
-        lastComboTime: fullRows.length > 0 ? now : state.lastComboTime
+        combo: newCombo
       }
     }
 
@@ -358,7 +346,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         dropDistance += 1
       }
 
-      // If it's a power-up piece, activate it
       if (state.currentPiece.powerUp) {
         let powerUpEffect: Partial<GameState> = {}
 
@@ -376,9 +363,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                 ...state.activePowerUps,
                 {
                   ...state.currentPiece.powerUp,
-                  startTime: Date.now(),
-                  endTime:
-                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                  startTime: now,
+                  endTime: now + state.currentPiece.powerUp.duration * 1000
                 }
               ]
             }
@@ -390,9 +376,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
                 ...state.activePowerUps,
                 {
                   ...state.currentPiece.powerUp,
-                  startTime: Date.now(),
-                  endTime:
-                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                  startTime: now,
+                  endTime: now + state.currentPiece.powerUp.duration * 1000
                 }
               ]
             }
@@ -429,42 +414,46 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
-      const additionalScore = calculateScore(
+      const newCombo =
+        fullRows.length > 0
+          ? {
+              count: isComboActive ? state.combo.count + 1 : 1,
+              lastTime: now,
+              multiplier: calculateComboMultiplier(
+                isComboActive ? state.combo.count + 1 : 1
+              ),
+              isActive: true,
+              timeWindow: COMBO_CONFIG.TIME_WINDOW
+            }
+          : {
+              ...INITIAL_COMBO_STATE,
+              lastTime: now
+            }
+
+      const score = calculateScore(
         fullRows.length,
         dropDistance,
         false,
-        state.level
-      )
-
-      const now = Date.now()
-      const isCombo =
-        fullRows.length > 0 &&
-        now - state.lastComboTime < SCORING.combo.timeWindow
-      const comboMultiplier = isCombo
-        ? Math.pow(SCORING.combo.multiplier, state.combo)
-        : 1
-      const finalScore = Math.floor(
-        state.score + additionalScore * comboMultiplier
+        state.level,
+        newCombo.multiplier
       )
 
       return {
         ...state,
         board: updatedBoard,
-        score: finalScore,
+        score: state.score + score,
         currentPiece: state.nextPiece,
-        nextPiece: shouldGeneratePowerUp(state.score)
+        nextPiece: shouldGeneratePowerUp(state.score + score)
           ? createPowerUpPiece(getRandomPowerUpType())
           : getRandomPiece(),
         lines: state.lines + fullRows.length,
         level: Math.floor((state.lines + fullRows.length) / 10) + 1,
-        combo: isCombo ? state.combo + 1 : 0,
-        lastComboTime: fullRows.length > 0 ? now : state.lastComboTime
+        combo: newCombo
       }
     }
 
     case 'TICK': {
       if (state.isTimeFrozen) {
-        const now = Date.now()
         const timeFreezeEffect = state.activePowerUps.find(
           p => p.type === PowerUpType.TIME_FREEZE
         )
@@ -485,9 +474,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
-      const now = Date.now()
       const deltaTime = now - state.lastTick
       const newTimeLeft = Math.max(0, state.timeLeft - deltaTime / 1000)
+
+      // Check combo expiration
+      const updatedCombo = isComboActive
+        ? state.combo
+        : {
+            ...INITIAL_COMBO_STATE,
+            lastTime: now
+          }
 
       // Update ghost mode status
       const ghostEffect = state.activePowerUps.find(
@@ -507,7 +503,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           isGameOver: true,
           lastTick: now,
           activePowerUps,
-          isGhostMode
+          isGhostMode,
+          combo: updatedCombo
         }
       }
 
@@ -532,6 +529,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             lastTick: now,
             activePowerUps,
             isGhostMode,
+            combo: updatedCombo,
             currentPiece: {
               ...state.currentPiece,
               position: newPosition
@@ -545,7 +543,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
               timeLeft: newTimeLeft,
               lastTick: now,
               activePowerUps,
-              isGhostMode
+              isGhostMode,
+              combo: updatedCombo
             },
             { type: 'MOVE_DOWN' }
           )
@@ -557,7 +556,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         timeLeft: newTimeLeft,
         lastTick: now,
         activePowerUps,
-        isGhostMode
+        isGhostMode,
+        combo: updatedCombo
       }
     }
 
@@ -565,14 +565,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         isPaused: !state.isPaused,
-        lastTick: Date.now()
+        lastTick: now
       }
 
     case 'RESET':
       return {
         ...INITIAL_STATE,
         timeLeft: action.timeLimit || INITIAL_STATE.timeLeft,
-        lastTick: Date.now()
+        lastTick: now
       }
 
     default:

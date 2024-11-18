@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
 import { PowerUp } from '@/types/power-ups'
 import { hasCollision } from '@/lib/collision'
+import { ComboDisplay } from '@/components/combo-display'
 
 // Animation variants
 const rowClearVariants = {
@@ -464,28 +465,6 @@ export function GameBoard({
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Score Popups */}
-      <AnimatePresence>
-        {clearedRows.length > 0 && (
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -20, opacity: 0 }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          >
-            <div className="rounded-lg border border-border bg-background/80 px-4 py-2 backdrop-blur-sm">
-              <div className="text-2xl font-bold">
-                {clearedRows.length === 4
-                  ? 'Tetris!'
-                  : `${clearedRows.length} Lines!`}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                +{calculateScore(clearedRows.length)} points
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {/* Power-up Tutorial Hints */}
       {state.currentPiece?.powerUp && !state.isPaused && !state.isGameOver && (
         <motion.div
@@ -505,6 +484,8 @@ export function GameBoard({
           </div>
         </motion.div>
       )}
+      {/* Combo Display */}
+      <ComboDisplay combo={state.combo} />
     </div>
   )
 }
