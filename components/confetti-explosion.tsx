@@ -27,6 +27,7 @@ export function ConfettiExplosion({
   const particles = useRef<Particle[]>([])
   const animationFrame = useRef<number>()
   const startTime = useRef<number>(0)
+  const isActive = useRef(true)
 
   const createParticle = useCallback(
     (x: number, y: number): Particle => {
@@ -61,7 +62,7 @@ export function ConfettiExplosion({
 
   const animate = useCallback(
     (timestamp: number) => {
-      if (!canvasRef.current) return
+      if (!canvasRef.current || !isActive.current) return
       const canvas = canvasRef.current
       const ctx = canvas.getContext('2d')
       if (!ctx) return
@@ -73,8 +74,9 @@ export function ConfettiExplosion({
       const progress = timestamp - startTime.current
 
       if (progress > duration) {
-        if (canvas.parentElement) {
-          canvas.parentElement.removeChild(canvas)
+        isActive.current = false
+        if (animationFrame.current) {
+          cancelAnimationFrame(animationFrame.current)
         }
         return
       }
@@ -99,30 +101,45 @@ export function ConfettiExplosion({
         ctx.restore()
       })
 
-      animationFrame.current = requestAnimationFrame(animate)
+      // Remove particles that are off screen
+      particles.current = particles.current.filter(
+        particle =>
+          particle.y < canvas.height &&
+          particle.x > 0 &&
+          particle.x < canvas.width
+      )
+
+      if (isActive.current) {
+        animationFrame.current = requestAnimationFrame(animate)
+      }
     },
     [duration]
   )
 
   useEffect(() => {
-    if (!canvasRef.current) return
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-    // Set canvas size
     const updateCanvasSize = () => {
       if (!canvasRef.current) return
-      canvasRef.current.width = window.innerWidth
-      canvasRef.current.height = window.innerHeight
+      const canvas = canvasRef.current
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
     }
 
     updateCanvasSize()
     window.addEventListener('resize', updateCanvasSize)
 
-    // Initialize particles and start animation
+    // Reset flags and start animation
+    isActive.current = true
+    startTime.current = 0
     initParticles()
     animationFrame.current = requestAnimationFrame(animate)
 
+    // Cleanup function
     return () => {
       window.removeEventListener('resize', updateCanvasSize)
+      isActive.current = false
       if (animationFrame.current) {
         cancelAnimationFrame(animationFrame.current)
       }
