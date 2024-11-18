@@ -35,7 +35,7 @@ export function GameOverDialog({
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="sm:max-w-md [&>button]:hidden">
+      <DialogContent hideClose className="sm:max-w-md">
         {hasWon && <ConfettiExplosion />}
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
