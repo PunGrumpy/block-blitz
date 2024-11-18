@@ -12,12 +12,12 @@ import { NextPiecePreview } from '@/components/next-piece-preview'
 import { TouchControls } from '@/components/touch-controls'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import WelcomeScreen from '@/components/welcome-screen'
 import { useGameSound } from '@/hooks/use-game-sound'
 import { useGameState } from '@/hooks/use-game-state'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { GameConfig } from '@/types/game'
-import WelcomeScreen from '@/components/welcome-screen'
 
 interface DialogState {
   showWelcome: boolean
