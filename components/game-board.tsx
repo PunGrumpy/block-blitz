@@ -1,7 +1,6 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Icon } from 'lucide-react'
 import React from 'react'
 
 import { PowerUpIndicator } from '@/components/power-up-indicator'
@@ -333,7 +332,7 @@ export function GameBoard({
 
   return (
     <div
-      className={cn('relative aspect-[1/2] h-full', className)}
+      className={cn('relative aspect-[1/2] size-full', className)}
       aria-label="Game Board"
     >
       {/* Main Game Canvas */}
@@ -341,7 +340,7 @@ export function GameBoard({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="relative h-full"
+        className="relative size-full"
       >
         <canvas
           ref={canvasRef}
@@ -422,43 +421,6 @@ export function GameBoard({
           </motion.div>
         </div>
       )}
-      {/* Mobile Stats and Next Piece Overlay */}
-      <div className="absolute right-4 top-4 flex flex-row gap-2 lg:hidden">
-        <div className="rounded-lg border border-border bg-background/80 p-2 backdrop-blur-sm">
-          <div className="text-xs text-muted-foreground">Next</div>
-          <div className="h-12 w-12">
-            {state.nextPiece && (
-              <div
-                className="relative h-full w-full"
-                style={{
-                  backgroundColor: state.nextPiece.powerUp
-                    ? state.nextPiece.powerUp.color + '40'
-                    : 'transparent'
-                }}
-              >
-                {state.nextPiece.shape.map((row, y) =>
-                  row.map(
-                    (cell, x) =>
-                      cell && (
-                        <div
-                          key={`${x}-${y}`}
-                          className="absolute"
-                          style={{
-                            width: `${100 / 4}%`,
-                            height: `${100 / 4}%`,
-                            left: `${(x * 100) / 4}%`,
-                            top: `${(y * 100) / 4}%`,
-                            backgroundColor: state.nextPiece?.color
-                          }}
-                        />
-                      )
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
       {/* Game Status Effects */}
       <AnimatePresence>
         {state.isTimeFrozen && (
