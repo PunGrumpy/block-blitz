@@ -1,5 +1,10 @@
 import { GameConfig, ScoreSystem } from '@/types/game'
 
+export const COMBO_CONFIG = {
+  MULTIPLIER: 1.5,
+  TIME_WINDOW: 10000 // 10 seconds
+} as const
+
 export const SCORING: ScoreSystem = {
   singleLine: 100,
   doubleLine: 300,
@@ -8,8 +13,8 @@ export const SCORING: ScoreSystem = {
   softDrop: 1,
   hardDrop: 2,
   combo: {
-    multiplier: 1.5,
-    timeWindow: 10000 // 10 seconds
+    multiplier: COMBO_CONFIG.MULTIPLIER,
+    timeWindow: COMBO_CONFIG.TIME_WINDOW
   }
 } as const
 
