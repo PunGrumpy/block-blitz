@@ -1,6 +1,17 @@
 'use client'
 
-import { Keyboard, Smartphone, Space, Target, Trophy } from 'lucide-react'
+import {
+  Ghost,
+  Keyboard,
+  Minimize2,
+  Shuffle,
+  Smartphone,
+  Space,
+  Target,
+  Timer,
+  Trophy,
+  Zap
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -30,10 +41,11 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
         </DialogHeader>
 
         <Tabs defaultValue="controls" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4 gap-2">
             <TabsTrigger value="controls">Controls</TabsTrigger>
             <TabsTrigger value="rules">Rules</TabsTrigger>
             <TabsTrigger value="scoring">Scoring</TabsTrigger>
+            <TabsTrigger value="power-ups">Power-Ups</TabsTrigger>
           </TabsList>
 
           <TabsContent value="controls" className="mt-4">
@@ -198,6 +210,97 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                       <span className="text-muted-foreground">×1.6</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="power-ups" className="mt-4">
+            <ScrollArea className="h-[300px] rounded-md border p-4">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="mb-3 text-lg font-semibold">
+                    Special Power-ups
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-red-500/20">
+                        <Zap className="size-5 text-red-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Color Bomb</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Creates an explosive chain reaction, clearing blocks
+                          in waves from the impact point
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-yellow-500/20">
+                        <Minimize2 className="size-5 text-yellow-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Line Blast</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Clears entire row and column where piece lands
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-cyan-500/20">
+                        <Timer className="size-5 text-cyan-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Time Freeze</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Freezes block descent for 10 seconds
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-green-500/20">
+                        <Ghost className="size-5 text-green-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Ghost Block</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Allows pieces to pass through other blocks for 15
+                          seconds
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-purple-500/20">
+                        <Shuffle className="size-5 text-purple-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Shuffle</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Reorganizes placed blocks while maintaining vertical
+                          stacking
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-3 text-lg font-semibold">
+                    Power-up Chances
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Power-ups appear randomly with increasing frequency as you
+                    score more points:
+                  </p>
+                  <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                    <li>Base chance starts at 8.5%</li>
+                    <li>+1% per 500 points scored (max 15% bonus)</li>
+                    <li>+2% per 1000 points (level bonus)</li>
+                  </ul>
                 </div>
               </div>
             </ScrollArea>
