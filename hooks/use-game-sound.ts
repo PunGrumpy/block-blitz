@@ -6,25 +6,25 @@ interface SoundOptions {
   effects: boolean
 }
 
-// Sound frequencies for different game actions
 const SOUND_EFFECTS = {
-  move: { frequency: 220, duration: 0.05 }, // A3 note, very short
-  rotate: { frequency: 330, duration: 0.08 }, // E4 note, short
-  drop: { frequency: 440, duration: 0.15 }, // A4 note, medium
-  clear: { frequency: 880, duration: 0.2 }, // A5 note, longer
-  gameOver: { frequency: 110, duration: 0.5 } // A2 note, very long
+  move: { frequency: 220, duration: 0.05 },
+  rotate: { frequency: 330, duration: 0.08 },
+  drop: { frequency: 440, duration: 0.15 },
+  clear: { frequency: 880, duration: 0.2 },
+  gameOver: { frequency: 110, duration: 0.5 }
 }
+
+// Minimum volume threshold to avoid Web Audio API errors
+const MIN_VOLUME = 0.0001
 
 export function useGameSound(options: SoundOptions) {
   const audioContextRef = useRef<AudioContext | null>(null)
 
-  // Initialize AudioContext on first interaction
   useEffect(() => {
     const initAudioContext = () => {
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext()
       }
-      // Remove listener after first interaction
       document.removeEventListener('click', initAudioContext)
       document.removeEventListener('keydown', initAudioContext)
     }
@@ -50,23 +50,25 @@ export function useGameSound(options: SoundOptions) {
       const oscillator = ctx.createOscillator()
       const gainNode = ctx.createGain()
 
-      // Configure oscillator
       oscillator.connect(gainNode)
       gainNode.connect(ctx.destination)
       oscillator.frequency.value = frequency
 
-      // Set volume
-      const volume = options.volume / 100
-      gainNode.gain.setValueAtTime(volume * 0.2, ctx.currentTime)
+      // Calculate volume with minimum threshold
+      const normalizedVolume = Math.max(
+        MIN_VOLUME,
+        (options.volume / 100) * 0.2
+      )
+      gainNode.gain.setValueAtTime(normalizedVolume, ctx.currentTime)
 
-      // Start tone with attack
       oscillator.start()
+      // Ensure final volume is above minimum threshold
+      const finalVolume = Math.max(MIN_VOLUME, normalizedVolume * 0.01)
       gainNode.gain.exponentialRampToValueAtTime(
-        volume * 0.01,
+        finalVolume,
         ctx.currentTime + duration
       )
 
-      // Stop and cleanup
       setTimeout(() => {
         oscillator.stop()
         oscillator.disconnect()
