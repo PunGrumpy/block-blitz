@@ -1,5 +1,5 @@
 import { POWER_UPS } from '@/constants/power-ups'
-import { GamePiece, GameState } from '@/types/game'
+import { GamePiece, GameState, Position } from '@/types/game'
 import { ActivePowerUp, PowerUp, PowerUpType } from '@/types/power-ups'
 
 interface PowerUpState {
@@ -386,9 +386,4 @@ function hasAdjacentClear(
       board[newY][newX] === null
     )
   })
-}
-
-interface Position {
-  x: number
-  y: number
 }
