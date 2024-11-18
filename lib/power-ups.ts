@@ -121,31 +121,48 @@ export function handleLineBlast(state: GameState): Partial<GameState> {
 }
 
 export function handleShuffle(state: GameState): Partial<GameState> {
-  const cells = state.board
-    .flatMap((row, y) =>
-      row.map((cell, x) => ({ cell, x, y })).filter(({ cell }) => cell !== null)
-    )
-    .sort(() => Math.random() - 0.5)
+  // Collect non-null cells while preserving vertical order
+  const cellsByColumn: { cell: string | null; y: number }[][] = Array(
+    state.board[0].length
+  )
+    .fill(null)
+    .map(() => [])
 
-  const newBoard = Array(state.board.length)
+  // Group cells by column maintaining vertical order
+  for (let x = 0; x < state.board[0].length; x++) {
+    for (let y = state.board.length - 1; y >= 0; y--) {
+      const cell = state.board[y][x]
+      if (cell !== null) {
+        cellsByColumn[x].push({ cell, y })
+      }
+    }
+  }
+
+  // Shuffle column positions only
+  const shuffledColumnIndices = Array.from(
+    { length: state.board[0].length },
+    (_, i) => i
+  ).sort(() => Math.random() - 0.5)
+
+  // Create new empty board
+  const newBoard: (string | null)[][] = Array(state.board.length)
     .fill(null)
     .map(() => Array(state.board[0].length).fill(null))
 
-  cells.forEach(({ cell }, index) => {
-    const y = Math.floor(index / state.board[0].length)
-    const x = index % state.board[0].length
-    if (y < newBoard.length && x < newBoard[0].length) {
-      newBoard[y][x] = cell
-    }
-  })
+  // Place blocks in shuffled columns while maintaining stacking
+  shuffledColumnIndices.forEach((newX, originalX) => {
+    const column = cellsByColumn[originalX]
+    let bottomY = state.board.length - 1
 
-  // Only award points if the shuffle creates potential matches
-  const potentialMatches = findPotentialMatches(newBoard)
-  const score = potentialMatches.length * 20
+    column.forEach(({ cell }) => {
+      newBoard[bottomY][newX] = cell
+      bottomY--
+    })
+  })
 
   return {
     board: newBoard,
-    score: state.score + score
+    score: state.score + 100
   }
 }
 
