@@ -1,6 +1,6 @@
 import { PowerUpType, PowerUp, ActivePowerUp } from '@/types/power-ups'
 import { POWER_UPS } from '@/constants/power-ups'
-import { GameState, GamePiece, Position } from '@/types/game'
+import { GameState, GamePiece } from '@/types/game'
 
 export function createPowerUpPiece(type: PowerUpType): GamePiece {
   const powerUp = POWER_UPS[type]
@@ -164,30 +164,6 @@ export function handleShuffle(state: GameState): Partial<GameState> {
     board: newBoard,
     score: state.score + 100
   }
-}
-
-function findPotentialMatches(board: (string | null)[][]): Position[] {
-  const matches: Position[] = []
-
-  // Check horizontal potential matches
-  for (let y = 0; y < board.length; y++) {
-    for (let x = 0; x < board[0].length - 2; x++) {
-      if (board[y][x] && board[y][x] === board[y][x + 1]) {
-        matches.push({ x, y })
-      }
-    }
-  }
-
-  // Check vertical potential matches
-  for (let y = 0; y < board.length - 2; y++) {
-    for (let x = 0; x < board[0].length; x++) {
-      if (board[y][x] && board[y][x] === board[y + 1][x]) {
-        matches.push({ x, y })
-      }
-    }
-  }
-
-  return matches
 }
 
 export function updatePowerUps(state: GameState): Partial<GameState> {
