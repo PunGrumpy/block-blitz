@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Your Name' }],
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
+    { media: '(prefers-color-scheme: light)', color: '#fafafa' },
     { media: '(prefers-color-scheme: dark)', color: '#09090b' }
   ]
 }
