@@ -57,14 +57,14 @@ export function activatePowerUp(
 }
 
 export function handleColorBomb(state: GameState): Partial<GameState> {
-  if (!state.currentPiece?.color) return {}
+  const selectedColor = state.currentPiece?.color
+  if (!selectedColor) return {}
 
-  const selectedColor = state.currentPiece.color
-  let score = 0
+  let blocksCleared = 0
   const newBoard = state.board.map(row =>
     row.map(cell => {
       if (cell === selectedColor) {
-        score += 50 // Points per block cleared
+        blocksCleared++
         return null
       }
       return cell
@@ -73,7 +73,7 @@ export function handleColorBomb(state: GameState): Partial<GameState> {
 
   return {
     board: newBoard,
-    score: state.score + score
+    score: state.score + blocksCleared * 100
   }
 }
 
@@ -81,18 +81,30 @@ export function handleLineBlast(state: GameState): Partial<GameState> {
   if (!state.currentPiece) return {}
 
   const rowToBlast = state.currentPiece.position.y
-  const blocksCleared = state.board[rowToBlast].filter(
+  if (rowToBlast < 0 || rowToBlast >= state.board.length) return {}
+
+  // Deep copy the board
+  const newBoard = state.board.map(row => [...row])
+
+  // Clear the entire row
+  const clearedBlocks = newBoard[rowToBlast].filter(
     cell => cell !== null
   ).length
-  const score = blocksCleared * 30 // Points per block cleared
+  newBoard[rowToBlast] = Array(state.board[0].length).fill(null)
 
-  const newBoard = state.board.map((row, index) =>
-    index === rowToBlast ? row.map(() => null) : row
-  )
+  // Move blocks down
+  for (let y = rowToBlast - 1; y >= 0; y--) {
+    for (let x = 0; x < newBoard[y].length; x++) {
+      if (newBoard[y][x] !== null) {
+        newBoard[y + 1][x] = newBoard[y][x]
+        newBoard[y][x] = null
+      }
+    }
+  }
 
   return {
     board: newBoard,
-    score: state.score + score
+    score: state.score + clearedBlocks * 50
   }
 }
 
