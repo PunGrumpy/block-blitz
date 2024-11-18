@@ -57,13 +57,14 @@ export function activatePowerUp(
 }
 
 export function handleColorBomb(state: GameState): Partial<GameState> {
-  const selectedColor = state.currentPiece?.color
-  if (!selectedColor) return {}
+  const targetColor = state.currentPiece?.color
+  if (!targetColor) return {}
 
   let blocksCleared = 0
   const newBoard = state.board.map(row =>
     row.map(cell => {
-      if (cell === selectedColor) {
+      // Match any non-null cell (all blocks) for color bomb
+      if (cell !== null) {
         blocksCleared++
         return null
       }
@@ -80,31 +81,42 @@ export function handleColorBomb(state: GameState): Partial<GameState> {
 export function handleLineBlast(state: GameState): Partial<GameState> {
   if (!state.currentPiece) return {}
 
-  const rowToBlast = state.currentPiece.position.y
-  if (rowToBlast < 0 || rowToBlast >= state.board.length) return {}
+  const y = state.currentPiece.position.y
+  const x = state.currentPiece.position.x
 
   // Deep copy the board
   const newBoard = state.board.map(row => [...row])
+  let blocksCleared = 0
 
-  // Clear the entire row
-  const clearedBlocks = newBoard[rowToBlast].filter(
-    cell => cell !== null
-  ).length
-  newBoard[rowToBlast] = Array(state.board[0].length).fill(null)
+  // Clear entire row
+  blocksCleared += newBoard[y].filter(cell => cell !== null).length
+  newBoard[y] = Array(state.board[0].length).fill(null)
 
-  // Move blocks down
-  for (let y = rowToBlast - 1; y >= 0; y--) {
-    for (let x = 0; x < newBoard[y].length; x++) {
-      if (newBoard[y][x] !== null) {
-        newBoard[y + 1][x] = newBoard[y][x]
-        newBoard[y][x] = null
+  // Clear entire column
+  for (let row = 0; row < newBoard.length; row++) {
+    if (newBoard[row][x] !== null) {
+      blocksCleared++
+      newBoard[row][x] = null
+    }
+  }
+
+  // Make blocks fall after clearing
+  for (let col = 0; col < newBoard[0].length; col++) {
+    let writePos = newBoard.length - 1
+    for (let row = newBoard.length - 1; row >= 0; row--) {
+      if (newBoard[row][col] !== null) {
+        if (writePos !== row) {
+          newBoard[writePos][col] = newBoard[row][col]
+          newBoard[row][col] = null
+        }
+        writePos--
       }
     }
   }
 
   return {
     board: newBoard,
-    score: state.score + clearedBlocks * 50
+    score: state.score + blocksCleared * 50
   }
 }
 
