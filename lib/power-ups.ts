@@ -118,6 +118,7 @@ export function updatePowerUps(state: GameState): Partial<GameState> {
     powerUp => powerUp.endTime > now
   )
 
+  //FIXME: State flags not properly reset when power-ups expire
   return {
     activePowerUps,
     isTimeFrozen: activePowerUps.some(

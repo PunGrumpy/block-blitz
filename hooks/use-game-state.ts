@@ -49,6 +49,7 @@ function isValidMove(
   newPosition: Position,
   isGhostMode: boolean = false
 ): boolean {
+  //FIXME: Ghost mode collision check is incomplete
   // In ghost mode, only check boundaries, not collisions
   if (isGhostMode) {
     return !piece.shape.some((row, y) =>
