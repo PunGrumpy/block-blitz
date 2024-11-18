@@ -18,91 +18,140 @@ import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { GameConfig } from '@/types/game'
 
+interface DialogState {
+  isHelpOpen: boolean
+  isSettingsOpen: boolean
+  wasManuallyPaused: boolean
+}
+
+interface GameSettings {
+  audio: {
+    enabled: boolean
+    volume: number
+    effects: boolean
+  }
+  display: {
+    showGhost: boolean
+    showGrid: boolean
+    particles: boolean
+  }
+}
+
+const DEFAULT_SETTINGS: GameSettings = {
+  audio: {
+    enabled: true,
+    volume: 70,
+    effects: true
+  },
+  display: {
+    showGhost: true,
+    showGrid: true,
+    particles: true
+  }
+}
+
 interface GameLayoutProps {
   config: GameConfig
 }
 
 export function GameLayout({ config }: GameLayoutProps) {
-  const [isHelpOpen, setIsHelpOpen] = React.useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
-  const [settings, setSettings] = React.useState({
-    audio: {
-      enabled: true,
-      volume: 70,
-      effects: true
-    },
-    display: {
-      showGhost: true,
-      showGrid: true,
-      particles: true
-    }
+  // State Management
+  const [dialogState, setDialogState] = React.useState<DialogState>({
+    isHelpOpen: false,
+    isSettingsOpen: false,
+    wasManuallyPaused: false
   })
-
+  const [settings, setSettings] = React.useState<GameSettings>(DEFAULT_SETTINGS)
   const { state, actions } = useGameState(config)
   const isMobile = useMediaQuery('(max-width: 768px)')
   const prevLinesRef = React.useRef(state.lines)
 
+  const isAnyDialogOpen = dialogState.isHelpOpen || dialogState.isSettingsOpen
+  const canTogglePause = !isAnyDialogOpen && !state.isGameOver
+
+  // Sound Management
   const sounds = useGameSound({
     enabled: settings.audio.enabled,
     volume: settings.audio.volume,
     effects: settings.audio.effects
   })
 
-  // Game actions with sound effects
-  const gameActions = React.useMemo(
-    () => ({
-      moveLeft: () => {
-        if (!state.isPaused && !state.isGameOver) {
-          sounds.playMove()
-          actions.moveLeft()
+  // Dialog Handlers
+  const handleDialogChange = React.useCallback(
+    (dialog: keyof DialogState, isOpen: boolean) => {
+      setDialogState(prev => {
+        const newState = { ...prev, [dialog]: isOpen }
+        const shouldResetPause =
+          !isOpen &&
+          !newState.isHelpOpen &&
+          !newState.isSettingsOpen &&
+          !prev.wasManuallyPaused
+        return {
+          ...newState,
+          wasManuallyPaused: shouldResetPause ? false : prev.wasManuallyPaused
         }
-      },
-      moveRight: () => {
-        if (!state.isPaused && !state.isGameOver) {
-          sounds.playMove()
-          actions.moveRight()
-        }
-      },
-      moveDown: () => {
-        if (!state.isPaused && !state.isGameOver) {
-          sounds.playMove()
-          actions.moveDown()
-        }
-      },
-      rotate: () => {
-        if (!state.isPaused && !state.isGameOver) {
-          sounds.playRotate()
-          actions.rotate()
-        }
-      },
-      hardDrop: () => {
-        if (!state.isPaused && !state.isGameOver) {
-          sounds.playDrop()
-          actions.hardDrop()
-        }
-      },
-      togglePause: () => {
-        if (!isHelpOpen && !isSettingsOpen && !state.isGameOver) {
-          actions.togglePause()
-        }
-      },
-      reset: () => {
-        actions.reset()
-        setIsHelpOpen(false)
-        setIsSettingsOpen(false)
-      }
-    }),
-    [
-      actions,
-      sounds,
-      state.isPaused,
-      state.isGameOver,
-      isHelpOpen,
-      isSettingsOpen
-    ]
+      })
+    },
+    []
   )
 
-  // Handle game sounds
+  // Pause Management
+  const handleTogglePause = React.useCallback(() => {
+    if (canTogglePause) {
+      setDialogState(prev => ({ ...prev, wasManuallyPaused: !state.isPaused }))
+      actions.togglePause()
+    }
+  }, [canTogglePause, state.isPaused, actions])
+
+  // Auto-pause effect
+  React.useEffect(() => {
+    if (isAnyDialogOpen && !state.isPaused && !state.isGameOver) {
+      actions.togglePause()
+    } else if (
+      !isAnyDialogOpen &&
+      state.isPaused &&
+      !dialogState.wasManuallyPaused &&
+      !state.isGameOver
+    ) {
+      actions.togglePause()
+    }
+  }, [
+    isAnyDialogOpen,
+    state.isPaused,
+    state.isGameOver,
+    dialogState.wasManuallyPaused,
+    actions
+  ])
+
+  // Game Actions
+  const gameActions = React.useMemo(() => {
+    const createActionWithSound =
+      (action: () => void, sound: () => void) => () => {
+        if (!state.isPaused && !state.isGameOver) {
+          sound()
+          action()
+        }
+      }
+
+    return {
+      moveLeft: createActionWithSound(actions.moveLeft, sounds.playMove),
+      moveRight: createActionWithSound(actions.moveRight, sounds.playMove),
+      moveDown: createActionWithSound(actions.moveDown, sounds.playMove),
+      rotate: createActionWithSound(actions.rotate, sounds.playRotate),
+      hardDrop: createActionWithSound(actions.hardDrop, sounds.playDrop),
+      togglePause: handleTogglePause,
+      reset: () => {
+        actions.reset()
+        setDialogState({
+          isHelpOpen: false,
+          isSettingsOpen: false,
+          wasManuallyPaused: false
+        })
+      }
+    }
+  }, [actions, sounds, state.isPaused, state.isGameOver, handleTogglePause])
+
+  // Sound Effects
   React.useEffect(() => {
     if (state.lines > prevLinesRef.current) {
       sounds.playClear()
@@ -116,12 +165,18 @@ export function GameLayout({ config }: GameLayoutProps) {
     }
   }, [state.isGameOver, sounds])
 
-  // Keyboard controls
+  // Keyboard Controls
   useKeyboard(gameActions, {
     repeatDelay: 200,
     repeatInterval: 50,
-    enabled: !isHelpOpen && !isSettingsOpen && !state.isGameOver
+    enabled: !isAnyDialogOpen && !state.isGameOver
   })
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.floor(seconds % 60)
+    return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`
+  }
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
@@ -141,13 +196,10 @@ export function GameLayout({ config }: GameLayoutProps) {
               <Button
                 variant="ghost"
                 className="hidden h-8 px-2 sm:flex sm:px-3"
-                aria-label={`Time left: ${Math.floor(state.timeLeft / 60)}:${String(Math.floor(state.timeLeft % 60)).padStart(2, '0')}`}
+                aria-label={`Time left: ${formatTime(state.timeLeft)}`}
               >
                 <Timer className="mr-1 size-4 sm:mr-2" />
-                <span>
-                  {Math.floor(state.timeLeft / 60)}:
-                  {String(Math.floor(state.timeLeft % 60)).padStart(2, '0')}
-                </span>
+                <span>{formatTime(state.timeLeft)}</span>
               </Button>
 
               <Button
@@ -162,13 +214,15 @@ export function GameLayout({ config }: GameLayoutProps) {
               <GameSettings
                 settings={settings}
                 onSettingsChange={setSettings}
-                open={isSettingsOpen}
-                onOpenChange={setIsSettingsOpen}
+                open={dialogState.isSettingsOpen}
+                onOpenChange={open =>
+                  handleDialogChange('isSettingsOpen', open)
+                }
               />
 
               <Button
                 variant="ghost"
-                onClick={() => setIsHelpOpen(true)}
+                onClick={() => handleDialogChange('isHelpOpen', true)}
                 size="icon"
                 className="size-8"
                 disabled={state.isGameOver}
@@ -179,10 +233,10 @@ export function GameLayout({ config }: GameLayoutProps) {
 
               <Button
                 variant="ghost"
-                onClick={gameActions.togglePause}
+                onClick={handleTogglePause}
                 size="icon"
                 className="size-8"
-                disabled={state.isGameOver || isHelpOpen || isSettingsOpen}
+                disabled={!canTogglePause}
                 aria-label={state.isPaused ? 'Resume game' : 'Pause game'}
               >
                 {state.isPaused ? (
@@ -288,9 +342,7 @@ export function GameLayout({ config }: GameLayoutProps) {
           onMoveDown={gameActions.moveDown}
           onRotate={gameActions.rotate}
           onHardDrop={gameActions.hardDrop}
-          disabled={
-            state.isPaused || state.isGameOver || isHelpOpen || isSettingsOpen
-          }
+          disabled={state.isPaused || state.isGameOver || isAnyDialogOpen}
           className="fixed inset-x-0 bottom-0 z-50"
         />
       )}
@@ -301,8 +353,7 @@ export function GameLayout({ config }: GameLayoutProps) {
           <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
             <div className="text-sm text-muted-foreground">Time</div>
             <div className="font-mono text-lg">
-              {Math.floor(state.timeLeft / 60)}:
-              {String(Math.floor(state.timeLeft % 60)).padStart(2, '0')}
+              {formatTime(state.timeLeft)}
             </div>
           </Card>
           <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
@@ -321,12 +372,13 @@ export function GameLayout({ config }: GameLayoutProps) {
       )}
 
       {/* Dialogs */}
-      <HelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+      <HelpDialog
+        open={dialogState.isHelpOpen}
+        onOpenChange={open => handleDialogChange('isHelpOpen', open)}
+      />
       <GamePauseDialog
-        isOpen={
-          state.isPaused && !state.isGameOver && !isHelpOpen && !isSettingsOpen
-        }
-        onResume={gameActions.togglePause}
+        isOpen={state.isPaused && !state.isGameOver && !isAnyDialogOpen}
+        onResume={handleTogglePause}
         onRestart={gameActions.reset}
       />
       <GameOverDialog
