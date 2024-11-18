@@ -41,7 +41,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
         </DialogHeader>
 
         <Tabs defaultValue="controls" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4 gap-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="controls">Controls</TabsTrigger>
             <TabsTrigger value="rules">Rules</TabsTrigger>
             <TabsTrigger value="scoring">Scoring</TabsTrigger>
@@ -132,6 +132,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                     <li>Game ends if blocks reach the top</li>
                     <li>Clear multiple lines at once for bonus points</li>
                     <li>Level increases every 10 lines cleared</li>
+                    <li>Higher levels increase block fall speed</li>
                   </ul>
                 </div>
 
@@ -141,9 +142,9 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                     Win Conditions
                   </h3>
                   <p className="text-muted-foreground">
-                    Reach the target score before time runs out. The game gets
-                    faster as your level increases. Keep the board clear and
-                    plan your moves carefully!
+                    Reach the target score before time runs out. Strategic
+                    power-up usage and chain reactions can help achieve higher
+                    scores faster.
                   </p>
                 </div>
               </div>
@@ -188,26 +189,28 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                 </div>
 
                 <div>
-                  <h3 className="mb-3 text-lg font-semibold">Level Bonuses</h3>
+                  <h3 className="mb-3 text-lg font-semibold">
+                    Level & Combo Bonuses
+                  </h3>
                   <p className="mb-2 text-muted-foreground">
-                    All points are multiplied by current level number
+                    Score multipliers increase with level and combos
                   </p>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Level 1</span>
-                      <span className="text-muted-foreground">×1.0</span>
+                      <span>Level Multiplier</span>
+                      <span className="text-muted-foreground">
+                        ×(1 + 0.1 per level)
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Level 2</span>
-                      <span className="text-muted-foreground">×1.2</span>
+                      <span>Combo Multiplier</span>
+                      <span className="text-muted-foreground">
+                        ×1.5 to ×8.0
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Level 3</span>
-                      <span className="text-muted-foreground">×1.4</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Level 4+</span>
-                      <span className="text-muted-foreground">×1.6</span>
+                      <span>Combo Time Window</span>
+                      <span className="text-muted-foreground">5 seconds</span>
                     </div>
                   </div>
                 </div>
@@ -230,7 +233,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                       <div>
                         <h4 className="font-medium">Color Bomb</h4>
                         <p className="text-sm text-muted-foreground">
-                          Clears blocks in waves from the impact point
+                          Creates chain reactions, unlocks at level 2
                         </p>
                       </div>
                     </div>
@@ -242,7 +245,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                       <div>
                         <h4 className="font-medium">Line Blast</h4>
                         <p className="text-sm text-muted-foreground">
-                          Clears entire row and column where piece lands
+                          Clears row and column, available from start
                         </p>
                       </div>
                     </div>
@@ -254,7 +257,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                       <div>
                         <h4 className="font-medium">Time Freeze</h4>
                         <p className="text-sm text-muted-foreground">
-                          Freezes block descent for 10 seconds
+                          10 second freeze, unlocks at level 3
                         </p>
                       </div>
                     </div>
@@ -266,8 +269,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                       <div>
                         <h4 className="font-medium">Ghost Block</h4>
                         <p className="text-sm text-muted-foreground">
-                          Allows pieces to pass through other blocks for 15
-                          seconds
+                          15 seconds of phasing, unlocks at level 4
                         </p>
                       </div>
                     </div>
@@ -279,8 +281,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                       <div>
                         <h4 className="font-medium">Shuffle</h4>
                         <p className="text-sm text-muted-foreground">
-                          Reorganizes placed blocks while maintaining vertical
-                          stacking
+                          Reorganizes blocks, unlocks at level 5
                         </p>
                       </div>
                     </div>
@@ -289,16 +290,14 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
 
                 <div>
                   <h3 className="mb-3 text-lg font-semibold">
-                    Power-up Chances
+                    Power-up System
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Power-ups appear randomly with increasing frequency as you
-                    score more points:
-                  </p>
-                  <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                    <li>Base chance starts at 8.5%</li>
-                    <li>+1% per 500 points scored (max 15% bonus)</li>
-                    <li>+2% per 1000 points (level bonus)</li>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li>• Base spawn chance: 8.5%</li>
+                    <li>• 5 second cooldown between power-ups</li>
+                    <li>• Chance increases with score and level</li>
+                    <li>• Consecutive power-ups reduce spawn chance</li>
+                    <li>• Higher level power-ups require score thresholds</li>
                   </ul>
                 </div>
               </div>
