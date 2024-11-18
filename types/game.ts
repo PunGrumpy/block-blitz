@@ -1,4 +1,9 @@
-import { ActivePowerUp, PowerUp } from '@/types/power-ups'
+import {
+  ActivePowerUp,
+  PowerUp,
+  PowerUpState,
+  PowerUpType
+} from '@/types/power-ups'
 
 // Board Types
 export interface Position {
@@ -71,6 +76,7 @@ export interface GameState {
   activePowerUps: ActivePowerUp[]
   isTimeFrozen: boolean
   isGhostMode: boolean
+  powerUpStates: Record<PowerUpType, PowerUpState>
 }
 
 // Scoring System

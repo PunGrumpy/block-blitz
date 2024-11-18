@@ -40,30 +40,53 @@ const INITIAL_STATE: GameState = {
   lastComboTime: Date.now(),
   activePowerUps: [],
   isTimeFrozen: false,
-  isGhostMode: false
+  isGhostMode: false,
+  powerUpStates: {
+    COLOR_BOMB: { isActive: false, remainingDuration: 0 },
+    LINE_BLAST: { isActive: false, remainingDuration: 0 },
+    TIME_FREEZE: { isActive: false, remainingDuration: 0 },
+    SHUFFLE: { isActive: false, remainingDuration: 0 },
+    GHOST_BLOCK: { isActive: false, remainingDuration: 0 }
+  }
 }
 
-function isValidMove(
+export function isValidMove(
   board: (string | null)[][],
   piece: GamePiece,
   newPosition: Position,
-  isGhostMode: boolean = false
+  gameState: GameState
 ): boolean {
-  //FIXME: Ghost mode collision check is incomplete
-  // In ghost mode, only check boundaries, not collisions
-  if (isGhostMode) {
-    return !piece.shape.some((row, y) =>
-      row.some((isSet, x) => {
-        if (!isSet) return false
+  // Ghost mode allows passing through other pieces but not boundaries
+  if (gameState.isGhostMode) {
+    return piece.shape.every((row, y) =>
+      row.every((isSet, x) => {
+        if (!isSet) return true
         const newX = newPosition.x + x
         const newY = newPosition.y + y
-        return newX < 0 || newX >= board[0].length || newY >= board.length
+        return (
+          newX >= 0 &&
+          newX < board[0].length &&
+          newY >= 0 &&
+          newY < board.length
+        )
       })
     )
   }
 
-  const movedPiece = { ...piece, position: newPosition }
-  return !hasCollision(board, movedPiece)
+  // Normal collision check
+  return !piece.shape.some((row, y) =>
+    row.some((isSet, x) => {
+      if (!isSet) return false
+      const newX = newPosition.x + x
+      const newY = newPosition.y + y
+      return (
+        newX < 0 ||
+        newX >= board[0].length ||
+        newY >= board.length ||
+        (newY >= 0 && board[newY][newX] !== null)
+      )
+    })
+  )
 }
 
 function calculateScore(
@@ -119,14 +142,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         x: state.currentPiece.position.x - 1,
         y: state.currentPiece.position.y
       }
-      if (
-        isValidMove(
-          state.board,
-          state.currentPiece,
-          newPosition,
-          state.isGhostMode
-        )
-      ) {
+      if (isValidMove(state.board, state.currentPiece, newPosition, state)) {
         return {
           ...state,
           currentPiece: {
@@ -144,14 +160,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         x: state.currentPiece.position.x + 1,
         y: state.currentPiece.position.y
       }
-      if (
-        isValidMove(
-          state.board,
-          state.currentPiece,
-          newPosition,
-          state.isGhostMode
-        )
-      ) {
+      if (isValidMove(state.board, state.currentPiece, newPosition, state)) {
         return {
           ...state,
           currentPiece: {
@@ -170,14 +179,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         y: state.currentPiece.position.y + 1
       }
 
-      if (
-        isValidMove(
-          state.board,
-          state.currentPiece,
-          newPosition,
-          state.isGhostMode
-        )
-      ) {
+      if (isValidMove(state.board, state.currentPiece, newPosition, state)) {
         return {
           ...state,
           currentPiece: {
@@ -268,7 +270,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             x: newPosition.x,
             y: newPosition.y + 1
           },
-          state.isGhostMode
+          state
         )
       ) {
         newPosition.y += 1
@@ -354,7 +356,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           state.board,
           rotatedPiece,
           state.currentPiece.position,
-          state.isGhostMode
+          state
         )
       ) {
         return {

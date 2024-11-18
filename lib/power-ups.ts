@@ -1,6 +1,6 @@
 import { PowerUpType, PowerUp, ActivePowerUp } from '@/types/power-ups'
 import { POWER_UPS } from '@/constants/power-ups'
-import { GameState, GamePiece } from '@/types/game'
+import { GameState, GamePiece, Position } from '@/types/game'
 
 export function createPowerUpPiece(type: PowerUpType): GamePiece {
   const powerUp = POWER_UPS[type]
@@ -56,48 +56,57 @@ export function activatePowerUp(
   }
 }
 
-function handleColorBomb(state: GameState): Partial<GameState> {
-  const selectedColor = state.currentPiece?.color
-  if (!selectedColor) return {}
+export function handleColorBomb(state: GameState): Partial<GameState> {
+  if (!state.currentPiece?.color) return {}
 
+  const selectedColor = state.currentPiece.color
+  let score = 0
   const newBoard = state.board.map(row =>
-    row.map(cell => (cell === selectedColor ? null : cell))
+    row.map(cell => {
+      if (cell === selectedColor) {
+        score += 50 // Points per block cleared
+        return null
+      }
+      return cell
+    })
   )
 
   return {
     board: newBoard,
-    score: state.score + 500 // Bonus points for using power-up
+    score: state.score + score
   }
 }
 
-function handleLineBlast(state: GameState): Partial<GameState> {
+export function handleLineBlast(state: GameState): Partial<GameState> {
   if (!state.currentPiece) return {}
 
   const rowToBlast = state.currentPiece.position.y
+  const blocksCleared = state.board[rowToBlast].filter(
+    cell => cell !== null
+  ).length
+  const score = blocksCleared * 30 // Points per block cleared
+
   const newBoard = state.board.map((row, index) =>
     index === rowToBlast ? row.map(() => null) : row
   )
 
   return {
     board: newBoard,
-    score: state.score + 300
+    score: state.score + score
   }
 }
 
-function handleShuffle(state: GameState): Partial<GameState> {
-  // Collect all non-null cells
+export function handleShuffle(state: GameState): Partial<GameState> {
   const cells = state.board
     .flatMap((row, y) =>
       row.map((cell, x) => ({ cell, x, y })).filter(({ cell }) => cell !== null)
     )
     .sort(() => Math.random() - 0.5)
 
-  // Create new empty board
-  const newBoard: (string | null)[][] = state.board.map(row =>
-    row.map(() => null)
-  )
+  const newBoard = Array(state.board.length)
+    .fill(null)
+    .map(() => Array(state.board[0].length).fill(null))
 
-  // Place cells back randomly
   cells.forEach(({ cell }, index) => {
     const y = Math.floor(index / state.board[0].length)
     const x = index % state.board[0].length
@@ -106,21 +115,72 @@ function handleShuffle(state: GameState): Partial<GameState> {
     }
   })
 
+  // Only award points if the shuffle creates potential matches
+  const potentialMatches = findPotentialMatches(newBoard)
+  const score = potentialMatches.length * 20
+
   return {
     board: newBoard,
-    score: state.score + 100
+    score: state.score + score
   }
+}
+
+function findPotentialMatches(board: (string | null)[][]): Position[] {
+  const matches: Position[] = []
+
+  // Check horizontal potential matches
+  for (let y = 0; y < board.length; y++) {
+    for (let x = 0; x < board[0].length - 2; x++) {
+      if (board[y][x] && board[y][x] === board[y][x + 1]) {
+        matches.push({ x, y })
+      }
+    }
+  }
+
+  // Check vertical potential matches
+  for (let y = 0; y < board.length - 2; y++) {
+    for (let x = 0; x < board[0].length; x++) {
+      if (board[y][x] && board[y][x] === board[y + 1][x]) {
+        matches.push({ x, y })
+      }
+    }
+  }
+
+  return matches
 }
 
 export function updatePowerUps(state: GameState): Partial<GameState> {
   const now = Date.now()
-  const activePowerUps = state.activePowerUps.filter(
-    powerUp => powerUp.endTime > now
-  )
+  const activePowerUps = state.activePowerUps.filter(powerUp => {
+    const isActive = powerUp.endTime > now
+    // Clear effects when power-up expires
+    if (!isActive && powerUp.type === PowerUpType.GHOST_BLOCK) {
+      return {
+        ...state,
+        isGhostMode: false,
+        currentPiece: state.currentPiece
+          ? {
+              ...state.currentPiece,
+              powerUp: undefined
+            }
+          : null
+      }
+    }
+    return isActive
+  })
 
-  //FIXME: State flags not properly reset when power-ups expire
+  // Update power-up states
+  const powerUpStates = { ...state.powerUpStates }
+  activePowerUps.forEach(powerUp => {
+    powerUpStates[powerUp.type] = {
+      isActive: true,
+      remainingDuration: (powerUp.endTime - now) / 1000
+    }
+  })
+
   return {
     activePowerUps,
+    powerUpStates,
     isTimeFrozen: activePowerUps.some(
       powerUp => powerUp.type === PowerUpType.TIME_FREEZE
     ),
