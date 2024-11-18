@@ -20,8 +20,12 @@ import {
   getRandomPowerUpType,
   createPowerUpPiece,
   activatePowerUp,
-  updatePowerUps
+  updatePowerUps,
+  handleShuffle,
+  handleLineBlast,
+  handleColorBomb
 } from '@/lib/power-ups'
+import { PowerUpType } from '@/types/power-ups'
 
 const INITIAL_STATE: GameState = {
   board: Array(20)
@@ -142,7 +146,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         x: state.currentPiece.position.x - 1,
         y: state.currentPiece.position.y
       }
-      if (isValidMove(state.board, state.currentPiece, newPosition, state)) {
+      if (
+        !hasCollision(
+          state.board,
+          state.currentPiece,
+          newPosition,
+          state.isGhostMode
+        )
+      ) {
         return {
           ...state,
           currentPiece: {
@@ -160,7 +171,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         x: state.currentPiece.position.x + 1,
         y: state.currentPiece.position.y
       }
-      if (isValidMove(state.board, state.currentPiece, newPosition, state)) {
+      if (
+        !hasCollision(
+          state.board,
+          state.currentPiece,
+          newPosition,
+          state.isGhostMode
+        )
+      ) {
         return {
           ...state,
           currentPiece: {
@@ -179,7 +197,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         y: state.currentPiece.position.y + 1
       }
 
-      if (isValidMove(state.board, state.currentPiece, newPosition, state)) {
+      if (
+        !hasCollision(
+          state.board,
+          state.currentPiece,
+          newPosition,
+          state.isGhostMode
+        )
+      ) {
         return {
           ...state,
           currentPiece: {
@@ -188,106 +213,55 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           },
           score: state.score + SCORING.softDrop
         }
-      } else {
-        // Handle power-up activation when piece lands
-        if (state.currentPiece.powerUp) {
-          const powerUpEffects = activatePowerUp(
-            state,
-            state.currentPiece.powerUp
-          )
-          const nextPiece = shouldGeneratePowerUp(state.score)
-            ? createPowerUpPiece(getRandomPowerUpType())
-            : getRandomPiece()
-
-          return {
-            ...state,
-            ...powerUpEffects,
-            currentPiece: nextPiece,
-            nextPiece: getRandomPiece()
-          }
-        }
-
-        // Normal piece landing logic
-        const newBoard = mergePieceToBoard(state.board, state.currentPiece)
-        const fullRows = findFullRows(newBoard)
-        const updatedBoard = clearRows(newBoard, fullRows)
-        const additionalScore = calculateScore(
-          fullRows.length,
-          0,
-          false,
-          state.level
-        )
-
-        if (isGameOver({ ...state, board: updatedBoard })) {
-          return {
-            ...state,
-            board: updatedBoard,
-            isGameOver: true
-          }
-        }
-
-        // Apply combo if applicable
-        const now = Date.now()
-        const isCombo =
-          fullRows.length > 0 &&
-          now - state.lastComboTime < SCORING.combo.timeWindow
-        const comboMultiplier = isCombo
-          ? Math.pow(SCORING.combo.multiplier, state.combo)
-          : 1
-        const finalScore = Math.floor(
-          state.score + additionalScore * comboMultiplier
-        )
-
-        // Generate next piece, possibly a power-up
-        const nextPiece = shouldGeneratePowerUp(finalScore)
-          ? createPowerUpPiece(getRandomPowerUpType())
-          : getRandomPiece()
-
-        return {
-          ...state,
-          board: updatedBoard,
-          currentPiece: state.nextPiece,
-          nextPiece,
-          score: finalScore,
-          lines: state.lines + fullRows.length,
-          level: Math.floor((state.lines + fullRows.length) / 10) + 1,
-          combo: isCombo ? state.combo + 1 : 0,
-          lastComboTime: fullRows.length > 0 ? now : state.lastComboTime
-        }
-      }
-    }
-
-    case 'HARD_DROP': {
-      if (!state.currentPiece) return state
-      let dropDistance = 0
-      let newPosition = { ...state.currentPiece.position }
-
-      while (
-        isValidMove(
-          state.board,
-          state.currentPiece,
-          {
-            x: newPosition.x,
-            y: newPosition.y + 1
-          },
-          state
-        )
-      ) {
-        newPosition.y += 1
-        dropDistance += 1
       }
 
-      // If it's a power-up piece, activate it
+      // Handle power-up activation when piece lands
       if (state.currentPiece.powerUp) {
-        const powerUpEffects = activatePowerUp(
-          state,
-          state.currentPiece.powerUp
-        )
+        let powerUpEffect: Partial<GameState> = {}
+
+        switch (state.currentPiece.powerUp.type) {
+          case PowerUpType.COLOR_BOMB:
+            powerUpEffect = handleColorBomb(state)
+            break
+          case PowerUpType.LINE_BLAST:
+            powerUpEffect = handleLineBlast(state)
+            break
+          case PowerUpType.TIME_FREEZE:
+            powerUpEffect = {
+              isTimeFrozen: true,
+              activePowerUps: [
+                ...state.activePowerUps,
+                {
+                  ...state.currentPiece.powerUp,
+                  startTime: Date.now(),
+                  endTime:
+                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                }
+              ]
+            }
+            break
+          case PowerUpType.GHOST_BLOCK:
+            powerUpEffect = {
+              isGhostMode: true,
+              activePowerUps: [
+                ...state.activePowerUps,
+                {
+                  ...state.currentPiece.powerUp,
+                  startTime: Date.now(),
+                  endTime:
+                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                }
+              ]
+            }
+            break
+          case PowerUpType.SHUFFLE:
+            powerUpEffect = handleShuffle(state)
+            break
+        }
+
         return {
           ...state,
-          ...powerUpEffects,
-          score:
-            state.score + calculateScore(0, dropDistance, false, state.level),
+          ...powerUpEffect,
           currentPiece: state.nextPiece,
           nextPiece: shouldGeneratePowerUp(state.score)
             ? createPowerUpPiece(getRandomPowerUpType())
@@ -295,16 +269,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
-      const newBoard = mergePieceToBoard(state.board, {
-        ...state.currentPiece,
-        position: newPosition
-      })
+      // Normal piece landing logic
+      const newBoard = mergePieceToBoard(state.board, state.currentPiece)
       const fullRows = findFullRows(newBoard)
       const updatedBoard = clearRows(newBoard, fullRows)
-
       const additionalScore = calculateScore(
         fullRows.length,
-        dropDistance,
+        0,
         false,
         state.level
       )
@@ -352,11 +323,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
       if (
-        isValidMove(
+        !hasCollision(
           state.board,
           rotatedPiece,
           state.currentPiece.position,
-          state
+          state.isGhostMode
         )
       ) {
         return {
@@ -367,33 +338,226 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return state
     }
 
+    case 'HARD_DROP': {
+      if (!state.currentPiece) return state
+      let dropDistance = 0
+      let newPosition = { ...state.currentPiece.position }
+
+      while (
+        !hasCollision(
+          state.board,
+          state.currentPiece,
+          {
+            x: newPosition.x,
+            y: newPosition.y + 1
+          },
+          state.isGhostMode
+        )
+      ) {
+        newPosition.y += 1
+        dropDistance += 1
+      }
+
+      // If it's a power-up piece, activate it
+      if (state.currentPiece.powerUp) {
+        let powerUpEffect: Partial<GameState> = {}
+
+        switch (state.currentPiece.powerUp.type) {
+          case PowerUpType.COLOR_BOMB:
+            powerUpEffect = handleColorBomb(state)
+            break
+          case PowerUpType.LINE_BLAST:
+            powerUpEffect = handleLineBlast(state)
+            break
+          case PowerUpType.TIME_FREEZE:
+            powerUpEffect = {
+              isTimeFrozen: true,
+              activePowerUps: [
+                ...state.activePowerUps,
+                {
+                  ...state.currentPiece.powerUp,
+                  startTime: Date.now(),
+                  endTime:
+                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                }
+              ]
+            }
+            break
+          case PowerUpType.GHOST_BLOCK:
+            powerUpEffect = {
+              isGhostMode: true,
+              activePowerUps: [
+                ...state.activePowerUps,
+                {
+                  ...state.currentPiece.powerUp,
+                  startTime: Date.now(),
+                  endTime:
+                    Date.now() + state.currentPiece.powerUp.duration * 1000
+                }
+              ]
+            }
+            break
+          case PowerUpType.SHUFFLE:
+            powerUpEffect = handleShuffle(state)
+            break
+        }
+
+        return {
+          ...state,
+          ...powerUpEffect,
+          score:
+            state.score + calculateScore(0, dropDistance, false, state.level),
+          currentPiece: state.nextPiece,
+          nextPiece: shouldGeneratePowerUp(state.score)
+            ? createPowerUpPiece(getRandomPowerUpType())
+            : getRandomPiece()
+        }
+      }
+
+      const newBoard = mergePieceToBoard(state.board, {
+        ...state.currentPiece,
+        position: newPosition
+      })
+      const fullRows = findFullRows(newBoard)
+      const updatedBoard = clearRows(newBoard, fullRows)
+
+      if (isGameOver({ ...state, board: updatedBoard })) {
+        return {
+          ...state,
+          board: updatedBoard,
+          isGameOver: true
+        }
+      }
+
+      const additionalScore = calculateScore(
+        fullRows.length,
+        dropDistance,
+        false,
+        state.level
+      )
+
+      const now = Date.now()
+      const isCombo =
+        fullRows.length > 0 &&
+        now - state.lastComboTime < SCORING.combo.timeWindow
+      const comboMultiplier = isCombo
+        ? Math.pow(SCORING.combo.multiplier, state.combo)
+        : 1
+      const finalScore = Math.floor(
+        state.score + additionalScore * comboMultiplier
+      )
+
+      return {
+        ...state,
+        board: updatedBoard,
+        score: finalScore,
+        currentPiece: state.nextPiece,
+        nextPiece: shouldGeneratePowerUp(state.score)
+          ? createPowerUpPiece(getRandomPowerUpType())
+          : getRandomPiece(),
+        lines: state.lines + fullRows.length,
+        level: Math.floor((state.lines + fullRows.length) / 10) + 1,
+        combo: isCombo ? state.combo + 1 : 0,
+        lastComboTime: fullRows.length > 0 ? now : state.lastComboTime
+      }
+    }
+
     case 'TICK': {
-      // Skip time updates if frozen
       if (state.isTimeFrozen) {
-        return state
+        const now = Date.now()
+        const timeFreezeEffect = state.activePowerUps.find(
+          p => p.type === PowerUpType.TIME_FREEZE
+        )
+
+        if (!timeFreezeEffect || timeFreezeEffect.endTime <= now) {
+          return {
+            ...state,
+            isTimeFrozen: false,
+            activePowerUps: state.activePowerUps.filter(
+              p => p.type !== PowerUpType.TIME_FREEZE
+            ),
+            lastTick: now
+          }
+        }
+        return {
+          ...state,
+          lastTick: now
+        }
       }
 
       const now = Date.now()
       const deltaTime = now - state.lastTick
       const newTimeLeft = Math.max(0, state.timeLeft - deltaTime / 1000)
 
+      // Update ghost mode status
+      const ghostEffect = state.activePowerUps.find(
+        p => p.type === PowerUpType.GHOST_BLOCK
+      )
+      const isGhostMode = ghostEffect ? ghostEffect.endTime > now : false
+
+      // Clean up expired power-ups
+      const activePowerUps = state.activePowerUps.filter(
+        powerUp => powerUp.endTime > now
+      )
+
       if (newTimeLeft === 0) {
         return {
           ...state,
           timeLeft: 0,
           isGameOver: true,
-          lastTick: now
+          lastTick: now,
+          activePowerUps,
+          isGhostMode
         }
       }
 
-      // Update power-ups
-      const powerUpUpdates = updatePowerUps(state)
+      // Move piece down if not frozen
+      if (!state.isTimeFrozen && state.currentPiece) {
+        const newPosition = {
+          x: state.currentPiece.position.x,
+          y: state.currentPiece.position.y + 1
+        }
+
+        if (
+          !hasCollision(
+            state.board,
+            state.currentPiece,
+            newPosition,
+            isGhostMode
+          )
+        ) {
+          return {
+            ...state,
+            timeLeft: newTimeLeft,
+            lastTick: now,
+            activePowerUps,
+            isGhostMode,
+            currentPiece: {
+              ...state.currentPiece,
+              position: newPosition
+            }
+          }
+        } else {
+          // Apply same logic as MOVE_DOWN when piece lands
+          return gameReducer(
+            {
+              ...state,
+              timeLeft: newTimeLeft,
+              lastTick: now,
+              activePowerUps,
+              isGhostMode
+            },
+            { type: 'MOVE_DOWN' }
+          )
+        }
+      }
 
       return {
         ...state,
-        ...powerUpUpdates,
         timeLeft: newTimeLeft,
-        lastTick: now
+        lastTick: now,
+        activePowerUps,
+        isGhostMode
       }
     }
 
