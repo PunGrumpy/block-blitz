@@ -51,7 +51,7 @@ const itemVariants = {
 export default function WelcomeScreen({ onStart, isOpen }: WelcomeScreenProps) {
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent hideClose className="max-w-2xl">
         <motion.div
           variants={containerVariants}
           initial="hidden"
