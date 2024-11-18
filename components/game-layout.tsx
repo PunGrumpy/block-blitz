@@ -17,8 +17,10 @@ import { useGameState } from '@/hooks/use-game-state'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { GameConfig } from '@/types/game'
+import WelcomeScreen from '@/components/welcome-screen'
 
 interface DialogState {
+  showWelcome: boolean
   isHelpOpen: boolean
   isSettingsOpen: boolean
   wasManuallyPaused: boolean
@@ -55,18 +57,21 @@ interface GameLayoutProps {
 }
 
 export function GameLayout({ config }: GameLayoutProps) {
-  // State Management
   const [dialogState, setDialogState] = React.useState<DialogState>({
     isHelpOpen: false,
     isSettingsOpen: false,
-    wasManuallyPaused: false
+    wasManuallyPaused: false,
+    showWelcome: true
   })
   const [settings, setSettings] = React.useState<GameSettings>(DEFAULT_SETTINGS)
   const { state, actions } = useGameState(config)
   const isMobile = useMediaQuery('(max-width: 768px)')
   const prevLinesRef = React.useRef(state.lines)
 
-  const isAnyDialogOpen = dialogState.isHelpOpen || dialogState.isSettingsOpen
+  const isAnyDialogOpen =
+    dialogState.isHelpOpen ||
+    dialogState.isSettingsOpen ||
+    dialogState.showWelcome
   const canTogglePause = !isAnyDialogOpen && !state.isGameOver
 
   // Sound Management
@@ -94,6 +99,12 @@ export function GameLayout({ config }: GameLayoutProps) {
     },
     []
   )
+
+  // Start Game
+  const handleStartGame = React.useCallback(() => {
+    handleDialogChange('showWelcome', false)
+    actions.reset()
+  }, [actions, handleDialogChange])
 
   // Pause Management
   const handleTogglePause = React.useCallback(() => {
@@ -139,17 +150,28 @@ export function GameLayout({ config }: GameLayoutProps) {
       moveDown: createActionWithSound(actions.moveDown, sounds.playMove),
       rotate: createActionWithSound(actions.rotate, sounds.playRotate),
       hardDrop: createActionWithSound(actions.hardDrop, sounds.playDrop),
+      toggleHelp: () =>
+        handleDialogChange('isHelpOpen', !dialogState.isHelpOpen),
       togglePause: handleTogglePause,
       reset: () => {
         actions.reset()
         setDialogState({
+          showWelcome: false,
           isHelpOpen: false,
           isSettingsOpen: false,
           wasManuallyPaused: false
         })
       }
     }
-  }, [actions, sounds, state.isPaused, state.isGameOver, handleTogglePause])
+  }, [
+    actions,
+    sounds,
+    state.isPaused,
+    state.isGameOver,
+    handleTogglePause,
+    handleDialogChange,
+    dialogState.isHelpOpen
+  ])
 
   // Sound Effects
   React.useEffect(() => {
@@ -180,6 +202,12 @@ export function GameLayout({ config }: GameLayoutProps) {
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
+      {/* Welcome Screen */}
+      <WelcomeScreen
+        isOpen={dialogState.showWelcome && !state.isGameOver}
+        onStart={handleStartGame}
+      />
+
       {/* Header */}
       <header className="flex h-[8vh] min-h-12 items-center border-b border-border px-4 md:px-6">
         <div className="flex w-full items-center justify-between gap-4">
