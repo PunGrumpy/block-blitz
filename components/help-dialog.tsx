@@ -230,8 +230,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                       <div>
                         <h4 className="font-medium">Color Bomb</h4>
                         <p className="text-sm text-muted-foreground">
-                          Creates an explosive chain reaction, clearing blocks
-                          in waves from the impact point
+                          Clears blocks in waves from the impact point
                         </p>
                       </div>
                     </div>
