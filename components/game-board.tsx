@@ -10,6 +10,7 @@ import { LinesClearedEffect } from '@/lib/effects'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
 import { PowerUp } from '@/types/power-ups'
+import { hasCollision } from '@/lib/collision'
 
 // Animation variants
 const rowClearVariants = {
@@ -71,19 +72,17 @@ export function GameBoard({
 
   const getGhostPosition = React.useCallback(
     (piece: GamePiece): number => {
-      if (state.isGhostMode) return piece.position.y
+      if (!piece) return 0
 
       let ghostY = piece.position.y
-      while (ghostY < state.board.length) {
-        if (ghostY + 1 >= state.board.length) break
-        const hasCollision = piece.shape.some((row, y) =>
-          row.some(
-            (cell, x) =>
-              cell &&
-              state.board[ghostY + y + 1]?.[piece.position.x + x] !== null
-          )
+      while (
+        !hasCollision(
+          state.board,
+          piece,
+          { ...piece.position, y: ghostY + 1 },
+          state.isGhostMode
         )
-        if (hasCollision) break
+      ) {
         ghostY++
       }
       return ghostY
