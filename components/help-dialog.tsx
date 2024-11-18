@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DEFAULT_CONFIG } from '@/constants/game'
 
 interface HelpDialogProps {
   open: boolean
@@ -142,9 +143,11 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                     Win Conditions
                   </h3>
                   <p className="text-muted-foreground">
-                    Reach the target score before time runs out. Strategic
-                    power-up usage and chain reactions can help achieve higher
-                    scores faster.
+                    Race against the clock to achieve a target score of{' '}
+                    {DEFAULT_CONFIG.targetScore} within{' '}
+                    {DEFAULT_CONFIG.timeLimit} seconds! Use power-ups
+                    strategically to boost your score and clear lines faster for
+                    the win.
                   </p>
                 </div>
               </div>
