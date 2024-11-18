@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Command, Crown, Gamepad2, Timer } from 'lucide-react'
+import { Command, Crown, Gamepad2, Target, Timer } from 'lucide-react'
 import * as React from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
+import { DEFAULT_CONFIG } from '@/constants/game'
 
 interface WelcomeScreenProps {
   onStart: () => void
@@ -90,6 +91,14 @@ export default function WelcomeScreen({ onStart, isOpen }: WelcomeScreenProps) {
                   <li className="flex items-start gap-2">
                     <Command className="mt-0.5 size-4 shrink-0" />
                     <span>Use power-ups to boost score</span>
+                  </li>
+                  {/* 3000 point in 3 min */}
+                  <li className="flex items-start gap-2">
+                    <Target className="mt-0.5 size-4 shrink-0" />
+                    <span>
+                      Score {DEFAULT_CONFIG.targetScore} points in{' '}
+                      {DEFAULT_CONFIG.timeLimit} seconds
+                    </span>
                   </li>
                 </ul>
               </CardContent>
