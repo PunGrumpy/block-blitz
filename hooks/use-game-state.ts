@@ -1,12 +1,5 @@
 import { useCallback, useReducer, useEffect } from 'react'
-import {
-  GameState,
-  GameAction,
-  GameConfig,
-  Position,
-  GamePiece,
-  ComboState
-} from '@/types/game'
+import { GameState, GameAction, GameConfig, ComboState } from '@/types/game'
 import { getRandomPiece, rotatePiece } from '@/lib/pieces'
 import {
   hasCollision,
@@ -20,8 +13,6 @@ import {
   shouldGeneratePowerUp,
   getRandomPowerUpType,
   createPowerUpPiece,
-  activatePowerUp,
-  updatePowerUps,
   handleShuffle,
   handleLineBlast,
   handleColorBomb
@@ -244,8 +235,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           ...powerUpEffect,
           currentPiece: state.nextPiece,
-          nextPiece: shouldGeneratePowerUp(state.score)
-            ? createPowerUpPiece(getRandomPowerUpType())
+          nextPiece: shouldGeneratePowerUp(state.score, state.level)
+            ? createPowerUpPiece(getRandomPowerUpType(state.level, state.score))
             : getRandomPiece()
         }
       }
@@ -292,8 +283,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         board: updatedBoard,
         currentPiece: state.nextPiece,
-        nextPiece: shouldGeneratePowerUp(state.score + score)
-          ? createPowerUpPiece(getRandomPowerUpType())
+        nextPiece: shouldGeneratePowerUp(state.score + score, state.level)
+          ? createPowerUpPiece(
+              getRandomPowerUpType(state.level, state.score + score)
+            )
           : getRandomPiece(),
         score: state.score + score,
         lines: state.lines + fullRows.length,
@@ -393,8 +386,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           score:
             state.score + calculateScore(0, dropDistance, false, state.level),
           currentPiece: state.nextPiece,
-          nextPiece: shouldGeneratePowerUp(state.score)
-            ? createPowerUpPiece(getRandomPowerUpType())
+          nextPiece: shouldGeneratePowerUp(state.score, state.level)
+            ? createPowerUpPiece(getRandomPowerUpType(state.level, state.score))
             : getRandomPiece()
         }
       }
@@ -443,8 +436,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         board: updatedBoard,
         score: state.score + score,
         currentPiece: state.nextPiece,
-        nextPiece: shouldGeneratePowerUp(state.score + score)
-          ? createPowerUpPiece(getRandomPowerUpType())
+        nextPiece: shouldGeneratePowerUp(state.score + score, state.level)
+          ? createPowerUpPiece(
+              getRandomPowerUpType(state.level, state.score + score)
+            )
           : getRandomPiece(),
         lines: state.lines + fullRows.length,
         level: Math.floor((state.lines + fullRows.length) / 10) + 1,
