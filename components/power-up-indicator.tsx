@@ -17,6 +17,7 @@ export function PowerUpIndicator({ powerUp }: PowerUpIndicatorProps) {
 
   return (
     <motion.div
+      key={`powerup-${powerUp.type}-${powerUp.startTime}`}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
@@ -28,6 +29,7 @@ export function PowerUpIndicator({ powerUp }: PowerUpIndicatorProps) {
         {powerUp.duration > 0 && (
           <div className="h-1 w-20 overflow-hidden rounded-full bg-muted">
             <motion.div
+              key={`progress-${powerUp.type}-${powerUp.startTime}`}
               className="h-full bg-primary"
               initial={{ width: '100%' }}
               animate={{ width: `${progress * 100}%` }}
