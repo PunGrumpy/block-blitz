@@ -8,6 +8,7 @@ import { PowerUpIndicator } from '@/components/power-up-indicator'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { hasCollision } from '@/lib/collision'
 import { LinesClearedEffect } from '@/lib/effects'
+import { renderHelpers } from '@/lib/pieces'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
 import { PowerUp } from '@/types/power-ups'
@@ -90,38 +91,104 @@ export function GameBoard({
     [state.board, state.isGhostMode]
   )
 
-  const drawPowerUpEffect = React.useCallback(
-    (ctx: CanvasRenderingContext2D, powerUp: PowerUp, x: number, y: number) => {
-      const size = cellSize
-      const centerX = x + size / 2
-      const centerY = y + size / 2
+  const drawBlock = React.useCallback(
+    (
+      ctx: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      piece: GamePiece,
+      opacity: number = 1,
+      isGhost: boolean = false,
+      isCurrentPiece: boolean = false
+    ) => {
+      const size = cellSize - 1 // Leave 1px gap for grid effect
 
-      // Create a glowing effect
-      const gradient = ctx.createRadialGradient(
-        centerX,
-        centerY,
-        0,
-        centerX,
-        centerY,
-        size
-      )
-      gradient.addColorStop(0, powerUp.color)
-      gradient.addColorStop(0.6, `${powerUp.color}80`) // Semi-transparent
-      gradient.addColorStop(1, 'transparent')
-
-      ctx.fillStyle = gradient
-      ctx.fillRect(x, y, size, size)
-
-      // Add pulsing animation
-      const time = Date.now() / 1000
-      const scale = 1 + Math.sin(time * 4) * 0.1
       ctx.save()
-      ctx.translate(centerX, centerY)
-      ctx.scale(scale, scale)
-      ctx.translate(-centerX, -centerY)
-      ctx.fillStyle = powerUp.color
-      ctx.globalAlpha = 0.3
-      ctx.fillRect(x + size * 0.1, y + size * 0.1, size * 0.8, size * 0.8)
+      ctx.globalAlpha = opacity
+
+      if (!isGhost) {
+        // Add glow effect for active pieces
+        if (isCurrentPiece) {
+          renderHelpers.addBlockGlow(ctx, x, y, size, piece, 1.5)
+        }
+
+        // Add shadow for depth
+        renderHelpers.addBlockShadow(ctx, piece)
+
+        // Create gradient fill
+        ctx.fillStyle = renderHelpers.createBlockGradient(
+          ctx,
+          x,
+          y,
+          size,
+          piece
+        )
+      } else {
+        // Ghost piece styling
+        ctx.fillStyle = piece.color
+        ctx.globalAlpha = 0.2
+      }
+
+      // Draw the main block shape with rounded corners
+      ctx.beginPath()
+      ctx.roundRect(x, y, size, size, 4)
+      ctx.fill()
+
+      if (!isGhost) {
+        // Add highlight effect
+        ctx.globalAlpha = 0.3
+        const highlightGradient = ctx.createLinearGradient(x, y, x, y + size)
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)')
+        highlightGradient.addColorStop(0.5, 'transparent')
+        ctx.fillStyle = highlightGradient
+        ctx.fill()
+
+        // Add subtle inner border
+        ctx.strokeStyle = piece.visuals.shadow
+        ctx.lineWidth = 1
+        ctx.globalAlpha = 0.3
+        ctx.stroke()
+      }
+
+      ctx.restore()
+    },
+    [cellSize]
+  )
+
+  const drawPowerUpBlock = React.useCallback(
+    (ctx: CanvasRenderingContext2D, x: number, y: number, piece: GamePiece) => {
+      if (!piece.powerUp) return
+
+      const size = cellSize - 1
+
+      ctx.save()
+
+      // Create power-up glow effect
+      const time = Date.now() / 1000
+      const glowIntensity = (Math.sin(time * 4) + 1) / 2
+      ctx.shadowColor = piece.powerUp.color
+      ctx.shadowBlur = 10 * glowIntensity
+
+      // Create animated gradient
+      const gradient = ctx.createLinearGradient(x, y, x + size, y + size)
+      gradient.addColorStop(0, piece.powerUp.color)
+      gradient.addColorStop(1, adjustColor(piece.powerUp.color, -30))
+      ctx.fillStyle = gradient
+
+      // Draw block with rounded corners
+      ctx.beginPath()
+      ctx.roundRect(x, y, size, size, 4)
+      ctx.fill()
+
+      // Add shine effect
+      ctx.globalAlpha = 0.4 * glowIntensity
+      const shineGradient = ctx.createLinearGradient(x, y, x + size, y + size)
+      shineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)')
+      shineGradient.addColorStop(0.5, 'transparent')
+      shineGradient.addColorStop(1, 'rgba(255, 255, 255, 0.2)')
+      ctx.fillStyle = shineGradient
+      ctx.fill()
+
       ctx.restore()
     },
     [cellSize]
@@ -129,17 +196,14 @@ export function GameBoard({
 
   const drawBoard = React.useCallback(
     (ctx: CanvasRenderingContext2D) => {
-      const { board, currentPiece } = state
-
       // Clear the canvas
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-      // Draw global power-up effects
+      // Add global power-up effects
       if (state.isTimeFrozen) {
         ctx.fillStyle = 'rgba(0, 191, 255, 0.1)'
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-        // Add frost effect at the edges
         const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height)
         gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)')
         gradient.addColorStop(0.1, 'transparent')
@@ -153,7 +217,6 @@ export function GameBoard({
         ctx.fillStyle = 'rgba(152, 251, 152, 0.1)'
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-        // Add ethereal effect
         const time = Date.now() / 1000
         const opacity = Math.sin(time * 2) * 0.1 + 0.2
         ctx.fillStyle = `rgba(152, 251, 152, ${opacity})`
@@ -164,96 +227,93 @@ export function GameBoard({
       if (showGrid) {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
         ctx.lineWidth = 1
-        for (let i = 0; i < board.length; i++) {
-          for (let j = 0; j < board[i].length; j++) {
+        for (let i = 0; i < state.board.length; i++) {
+          for (let j = 0; j < state.board[i].length; j++) {
             ctx.strokeRect(j * cellSize, i * cellSize, cellSize, cellSize)
           }
         }
       }
 
-      // Draw placed pieces
-      board.forEach((row, y) => {
+      // Draw placed blocks
+      state.board.forEach((row, y) => {
         row.forEach((cell, x) => {
           if (cell) {
-            ctx.fillStyle = cell
-            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
-
-            // Add slight gradient for depth
-            const gradient = ctx.createLinearGradient(
+            const placedPiece: GamePiece = {
+              shape: [[true]],
+              color: cell,
+              position: { x, y },
+              rotation: 0,
+              visuals: {
+                gradient: `linear-gradient(135deg, ${cell} 0%, ${adjustColor(cell, -20)} 100%)`,
+                shadow: adjustColor(cell, -40),
+                glow: `${cell}80`
+              }
+            }
+            drawBlock(
+              ctx,
               x * cellSize,
               y * cellSize,
-              x * cellSize,
-              (y + 1) * cellSize
+              placedPiece,
+              1,
+              false,
+              false
             )
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)')
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)')
-            ctx.fillStyle = gradient
-            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize)
-
-            // Add border
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
-            ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize)
           }
         })
       })
 
-      // Draw ghost piece
-      if (
-        showGhost &&
-        currentPiece &&
-        !state.isPaused &&
-        !state.isGameOver &&
-        !state.isGhostMode
-      ) {
-        const ghostY = getGhostPosition(currentPiece)
-        ctx.globalAlpha = 0.2
-        ctx.fillStyle = currentPiece.color
-        currentPiece.shape.forEach((row, y) => {
-          row.forEach((isSet, x) => {
-            if (isSet) {
-              ctx.fillRect(
-                (currentPiece.position.x + x) * cellSize,
-                (ghostY + y) * cellSize,
-                cellSize,
-                cellSize
-              )
-            }
-          })
-        })
-        ctx.globalAlpha = 1
-      }
-
-      // Draw current piece
+      const currentPiece = state.currentPiece
       if (currentPiece) {
+        // Draw ghost piece
+        if (
+          showGhost &&
+          !state.isPaused &&
+          !state.isGameOver &&
+          !state.isGhostMode
+        ) {
+          const ghostY = getGhostPosition(currentPiece)
+          currentPiece.shape.forEach((row, y) => {
+            row.forEach((isSet, x) => {
+              if (isSet) {
+                drawBlock(
+                  ctx,
+                  (currentPiece.position.x + x) * cellSize,
+                  (ghostY + y) * cellSize,
+                  currentPiece,
+                  0.2,
+                  true,
+                  false
+                )
+              }
+            })
+          })
+        }
+
+        // Draw current piece
         currentPiece.shape.forEach((row, y) => {
           row.forEach((isSet, x) => {
             if (isSet) {
-              const pieceX = (currentPiece.position.x + x) * cellSize
-              const pieceY = (currentPiece.position.y + y) * cellSize
+              const pieceX = currentPiece.position.x + x
+              const pieceY = currentPiece.position.y + y
 
               if (currentPiece.powerUp) {
-                // Draw power-up piece with special effects
-                drawPowerUpEffect(ctx, currentPiece.powerUp, pieceX, pieceY)
-              } else {
-                // Draw normal piece
-                ctx.fillStyle = currentPiece.color
-                ctx.fillRect(pieceX, pieceY, cellSize, cellSize)
-
-                // Add highlighting
-                const gradient = ctx.createLinearGradient(
-                  pieceX,
-                  pieceY,
-                  pieceX,
-                  pieceY + cellSize
+                drawPowerUpBlock(
+                  ctx,
+                  pieceX * cellSize,
+                  pieceY * cellSize,
+                  currentPiece
                 )
-                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)')
-                gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)')
-                ctx.fillStyle = gradient
-                ctx.fillRect(pieceX, pieceY, cellSize, cellSize)
+              } else {
+                drawBlock(
+                  ctx,
+                  pieceX * cellSize,
+                  pieceY * cellSize,
+                  currentPiece,
+                  1,
+                  false,
+                  true
+                )
               }
-
-              ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
-              ctx.strokeRect(pieceX, pieceY, cellSize, cellSize)
             }
           })
         })
@@ -276,9 +336,20 @@ export function GameBoard({
       showGrid,
       showParticles,
       getGhostPosition,
-      drawPowerUpEffect
+      drawBlock,
+      drawPowerUpBlock
     ]
   )
+
+  // Helper function to adjust color brightness
+  const adjustColor = (color: string, amount: number): string => {
+    const hex = color.replace('#', '')
+    const num = parseInt(hex, 16)
+    const r = Math.max(0, Math.min(255, (num >> 16) + amount))
+    const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + amount))
+    const b = Math.max(0, Math.min(255, (num & 0xff) + amount))
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
+  }
 
   useGameLoop(canvasRef, drawBoard)
 
@@ -403,6 +474,7 @@ export function GameBoard({
           </AnimatePresence>
         </div>
       </motion.div>
+
       {/* Game State Overlays */}
       {(state.isPaused || state.isGameOver) && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -422,6 +494,7 @@ export function GameBoard({
           </motion.div>
         </div>
       )}
+
       {/* Game Status Effects */}
       <AnimatePresence>
         {state.isTimeFrozen && (
@@ -448,6 +521,7 @@ export function GameBoard({
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Level Up Animation */}
       <AnimatePresence>
         {state.level > 1 && (
@@ -465,6 +539,7 @@ export function GameBoard({
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Power-up Tutorial Hints */}
       {state.currentPiece?.powerUp && !state.isPaused && !state.isGameOver && (
         <motion.div
@@ -484,6 +559,7 @@ export function GameBoard({
           </div>
         </motion.div>
       )}
+
       {/* Combo Display */}
       <ComboDisplay combo={state.combo} />
     </div>

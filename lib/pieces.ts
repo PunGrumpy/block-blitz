@@ -1,54 +1,18 @@
+import { PIECE_TYPES } from '@/constants/pieces'
 import { GamePiece } from '@/types/game'
 
-export const PIECE_TYPES = {
-  I: {
-    shape: [
-      [false, false, false, false],
-      [true, true, true, true],
-      [false, false, false, false],
-      [false, false, false, false]
-    ],
-    color: '#00f0f0'
-  },
-  O: {
-    shape: [
-      [true, true],
-      [true, true]
-    ],
-    color: '#f0f000'
-  },
-  T: {
-    shape: [
-      [false, true, false],
-      [true, true, true],
-      [false, false, false]
-    ],
-    color: '#a000f0'
-  },
-  L: {
-    shape: [
-      [false, false, true],
-      [true, true, true],
-      [false, false, false]
-    ],
-    color: '#f0a000'
-  },
-  J: {
-    shape: [
-      [true, false, false],
-      [true, true, true],
-      [false, false, false]
-    ],
-    color: '#0000f0'
-  }
-} as const
-
 export function createPiece(type: keyof typeof PIECE_TYPES): GamePiece {
+  const { shape, visuals } = PIECE_TYPES[type]
   return {
-    shape: PIECE_TYPES[type].shape.map(row => [...row]),
-    color: PIECE_TYPES[type].color,
+    shape: shape.map(row => [...row]),
+    color: visuals.color,
+    visuals: {
+      gradient: visuals.gradient,
+      shadow: visuals.shadow,
+      glow: visuals.glow
+    },
     position: {
-      x: Math.floor(10 / 2) - Math.floor(PIECE_TYPES[type].shape[0].length / 2),
+      x: Math.floor(10 / 2) - Math.floor(shape[0].length / 2),
       y: 0
     },
     rotation: 0
@@ -75,4 +39,42 @@ export function rotatePiece(piece: GamePiece): boolean[][] {
   }
 
   return rotated
+}
+
+// Helper functions for rendering
+export const renderHelpers = {
+  createBlockGradient: (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    piece: GamePiece
+  ): CanvasGradient => {
+    const gradient = ctx.createLinearGradient(x, y, x + size, y + size)
+    gradient.addColorStop(0, piece.color)
+    gradient.addColorStop(1, piece.visuals.shadow)
+    return gradient
+  },
+
+  addBlockShadow: (ctx: CanvasRenderingContext2D, piece: GamePiece): void => {
+    ctx.shadowColor = piece.visuals.shadow
+    ctx.shadowBlur = 4
+    ctx.shadowOffsetX = 2
+    ctx.shadowOffsetY = 2
+  },
+
+  addBlockGlow: (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    piece: GamePiece,
+    intensity: number = 1
+  ): void => {
+    const previousFilter = ctx.filter
+    ctx.filter = `blur(${4 * intensity}px)`
+    ctx.fillStyle = piece.visuals.glow
+    ctx.fillRect(x - 2, y - 2, size + 4, size + 4)
+    ctx.filter = previousFilter
+  }
 }

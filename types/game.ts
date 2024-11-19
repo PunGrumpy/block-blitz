@@ -16,13 +16,21 @@ export interface Size {
   height: number
 }
 
-// Piece Types
+// Block Types
+export interface BlockVisuals {
+  gradient: string
+  shadow: string
+  glow: string
+}
+
+// Game Piece Types
 export interface GamePiece {
   shape: boolean[][]
   color: string
   position: Position
   rotation: number
   powerUp?: PowerUp
+  visuals: BlockVisuals
 }
 
 // Combo System
