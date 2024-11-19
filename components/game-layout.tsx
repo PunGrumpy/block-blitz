@@ -17,6 +17,7 @@ import { useGameSound } from '@/hooks/use-game-sound'
 import { useGameState } from '@/hooks/use-game-state'
 import { useKeyboard } from '@/hooks/use-keyboard'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { cn } from '@/lib/utils'
 import { GameConfig } from '@/types/game'
 
 interface DialogState {
@@ -57,6 +58,7 @@ interface GameLayoutProps {
 }
 
 export function GameLayout({ config }: GameLayoutProps) {
+  // State Management
   const [dialogState, setDialogState] = React.useState<DialogState>({
     isHelpOpen: false,
     isSettingsOpen: false,
@@ -65,9 +67,17 @@ export function GameLayout({ config }: GameLayoutProps) {
   })
   const [settings, setSettings] = React.useState<GameSettings>(DEFAULT_SETTINGS)
   const { state, actions } = useGameState(config)
-  const isMobile = useMediaQuery('(max-width: 768px)')
+
+  // Responsive Layout Management
+  const isMobile = useMediaQuery('(max-width: 640px)')
+  const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)')
+  const showTouchControls = isMobile || isTablet
+  const isDesktop = !showTouchControls
+
+  // Refs and States
   const prevLinesRef = React.useRef(state.lines)
 
+  // Derived States
   const isAnyDialogOpen =
     dialogState.isHelpOpen ||
     dialogState.isSettingsOpen ||
@@ -197,6 +207,7 @@ export function GameLayout({ config }: GameLayoutProps) {
     enabled: !state.isGameOver
   })
 
+  // Helper Functions
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = Math.floor(seconds % 60)
@@ -284,7 +295,13 @@ export function GameLayout({ config }: GameLayoutProps) {
       {/* Main Game Area */}
       <div className="relative flex h-[92vh] w-full flex-1 items-center justify-center gap-4 overflow-hidden p-4 md:gap-8 lg:gap-12">
         {/* Game Board */}
-        <div className="relative size-full max-h-[calc(82vh-12vh)] max-w-screen-lg md:max-h-[92vh] md:w-auto">
+        <div
+          className={cn(
+            'relative size-full',
+            showTouchControls ? 'max-h-[calc(82vh-12vh)]' : 'max-h-[92vh]',
+            'max-w-screen-lg md:w-auto'
+          )}
+        >
           <Card className="relative h-full bg-background p-2 sm:p-4">
             <GameBoard
               state={state}
@@ -296,77 +313,79 @@ export function GameLayout({ config }: GameLayoutProps) {
           </Card>
         </div>
 
-        {/* Side Panel - Desktop */}
-        <div className="hidden h-full w-72 flex-col gap-4 lg:flex">
-          <Card className="p-4">
-            <h2 className="mb-2 font-mono font-medium">Next Piece</h2>
-            <div className="h-40">
-              <NextPiecePreview piece={state.nextPiece} cellSize={30} />
-            </div>
-          </Card>
+        {/* Side Panel - Desktop Only */}
+        {isDesktop && (
+          <div className="hidden h-full w-72 flex-col gap-4 lg:flex">
+            <Card className="p-4">
+              <h2 className="mb-2 font-mono font-medium">Next Piece</h2>
+              <div className="h-40">
+                <NextPiecePreview piece={state.nextPiece} cellSize={30} />
+              </div>
+            </Card>
 
-          <Card className="p-4">
-            <h2 className="mb-2 font-mono font-medium">Statistics</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="text-sm text-muted-foreground">Score</div>
-                <div className="font-mono text-lg">
-                  {state.score.toLocaleString()}
+            <Card className="p-4">
+              <h2 className="mb-2 font-mono font-medium">Statistics</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Score</div>
+                  <div className="font-mono text-lg">
+                    {state.score.toLocaleString()}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Lines</div>
+                  <div className="font-mono text-lg">{state.lines}</div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <div className="text-sm text-muted-foreground">Lines</div>
-                <div className="font-mono text-lg">{state.lines}</div>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className="flex-1 p-4">
-            <h2 className="mb-2 font-mono font-medium">Controls</h2>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Move Left</span>
-                <div className="flex space-x-1">
-                  <kbd className="rounded border px-2 font-mono">←</kbd>
-                  <span>or</span>
-                  <kbd className="rounded border px-2 font-mono">A</kbd>
+            <Card className="flex-1 p-4">
+              <h2 className="mb-2 font-mono font-medium">Controls</h2>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Move Left</span>
+                  <div className="flex space-x-1">
+                    <kbd className="rounded border px-2 font-mono">←</kbd>
+                    <span>or</span>
+                    <kbd className="rounded border px-2 font-mono">A</kbd>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Move Right</span>
+                  <div className="flex space-x-1">
+                    <kbd className="rounded border px-2 font-mono">→</kbd>
+                    <span>or</span>
+                    <kbd className="rounded border px-2 font-mono">D</kbd>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Rotate</span>
+                  <div className="flex space-x-1">
+                    <kbd className="rounded border px-2 font-mono">↑</kbd>
+                    <span>or</span>
+                    <kbd className="rounded border px-2 font-mono">W</kbd>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Soft Drop</span>
+                  <div className="flex space-x-1">
+                    <kbd className="rounded border px-2 font-mono">↓</kbd>
+                    <span>or</span>
+                    <kbd className="rounded border px-2 font-mono">S</kbd>
+                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Hard Drop</span>
+                  <kbd className="rounded border px-2 font-mono">Space</kbd>
                 </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Move Right</span>
-                <div className="flex space-x-1">
-                  <kbd className="rounded border px-2 font-mono">→</kbd>
-                  <span>or</span>
-                  <kbd className="rounded border px-2 font-mono">D</kbd>
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Rotate</span>
-                <div className="flex space-x-1">
-                  <kbd className="rounded border px-2 font-mono">↑</kbd>
-                  <span>or</span>
-                  <kbd className="rounded border px-2 font-mono">W</kbd>
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Soft Drop</span>
-                <div className="flex space-x-1">
-                  <kbd className="rounded border px-2 font-mono">↓</kbd>
-                  <span>or</span>
-                  <kbd className="rounded border px-2 font-mono">S</kbd>
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Hard Drop</span>
-                <kbd className="rounded border px-2 font-mono">Space</kbd>
-              </div>
-            </div>
-          </Card>
-        </div>
+            </Card>
+          </div>
+        )}
       </div>
 
-      {/* Mobile Controls */}
-      {isMobile && (
+      {/* Touch Controls */}
+      {showTouchControls && (
         <TouchControls
           onMoveLeft={gameActions.moveLeft}
           onMoveRight={gameActions.moveRight}
@@ -374,12 +393,17 @@ export function GameLayout({ config }: GameLayoutProps) {
           onRotate={gameActions.rotate}
           onHardDrop={gameActions.hardDrop}
           disabled={state.isPaused || state.isGameOver || isAnyDialogOpen}
-          className="fixed inset-x-0 bottom-0 z-50"
+          className={cn(
+            'fixed inset-x-0 bottom-0 z-50',
+            'h-[12vh] max-h-20', // Fixed height for touch controls
+            'bg-background/80 backdrop-blur-sm',
+            'border-t border-border'
+          )}
         />
       )}
 
-      {/* Mobile Stats Overlay */}
-      {isMobile && (
+      {/* Mobile/Tablet Stats Overlay */}
+      {showTouchControls && (
         <div className="absolute left-4 top-[10vh] z-10 flex flex-row gap-2">
           <Card className="h-16 bg-background/80 p-2 backdrop-blur-sm">
             <div className="text-sm text-muted-foreground">Time</div>
@@ -399,10 +423,18 @@ export function GameLayout({ config }: GameLayoutProps) {
               {state.level}
             </div>
           </Card>
-          <Card className="size-16 bg-background/80 p-2 backdrop-blur-sm">
+          <Card
+            className={cn(
+              'size-16 bg-background/80 p-2 backdrop-blur-sm',
+              isTablet ? 'hidden sm:block' : 'block' // Hide on mobile, show on tablet
+            )}
+          >
             <div className="text-sm text-muted-foreground">Next</div>
             <div>
-              <NextPiecePreview piece={state.nextPiece} cellSize={12} />
+              <NextPiecePreview
+                piece={state.nextPiece}
+                cellSize={isTablet ? 14 : 12}
+              />
             </div>
           </Card>
         </div>
@@ -427,6 +459,9 @@ export function GameLayout({ config }: GameLayoutProps) {
         targetScore={config.targetScore}
         onRestart={gameActions.reset}
       />
+
+      {/* Tutorial Hints for Touch Controls */}
+      {showTouchControls}
     </div>
   )
 }
