@@ -3,6 +3,7 @@
 import { Medal, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { getLeaderboard } from '@/actions/leaderboard'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -15,7 +16,7 @@ interface LeaderboardEntry {
   level: number
   lines: number
   timestamp: number
-  rank: number
+  rank?: number
 }
 
 interface LeaderBoardProps {
@@ -31,9 +32,7 @@ export function LeaderBoard({ onClose }: LeaderBoardProps) {
     const fetchLeaderboard = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch('/api/leaderboard')
-        if (!response.ok) throw new Error('Failed to fetch leaderboard')
-        const data = await response.json()
+        const data = await getLeaderboard()
         setEntries(data)
       } catch (error) {
         setError('Failed to load leaderboard')
