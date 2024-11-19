@@ -298,7 +298,7 @@ function DeviceContent({
             {isTablet && (
               <div className="mt-2 rounded-md bg-primary/10 p-2 text-xs">
                 <p className="text-primary">
-                  Tip: Use both thumbs for better control
+                  Tip: Use both thumbs for better controls
                 </p>
               </div>
             )}
