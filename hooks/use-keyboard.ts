@@ -42,6 +42,14 @@ export function useKeyboard(
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
+      // Skip if an input element is focused
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
+      ) {
+        return
+      }
+
       const key = event.code
       const action = KEYMAP[key]
 
