@@ -100,6 +100,11 @@ export function GameLayout({ config }: GameLayoutProps) {
     []
   )
 
+  // Help Dialog Toggle
+  const handleToggleHelp = React.useCallback(() => {
+    handleDialogChange('isHelpOpen', !dialogState.isHelpOpen)
+  }, [dialogState.isHelpOpen, handleDialogChange])
+
   // Start Game
   const handleStartGame = React.useCallback(() => {
     handleDialogChange('showWelcome', false)
@@ -150,8 +155,7 @@ export function GameLayout({ config }: GameLayoutProps) {
       moveDown: createActionWithSound(actions.moveDown, sounds.playMove),
       rotate: createActionWithSound(actions.rotate, sounds.playRotate),
       hardDrop: createActionWithSound(actions.hardDrop, sounds.playDrop),
-      toggleHelp: () =>
-        handleDialogChange('isHelpOpen', !dialogState.isHelpOpen),
+      toggleHelp: handleToggleHelp,
       togglePause: handleTogglePause,
       reset: () => {
         actions.reset()
@@ -169,8 +173,7 @@ export function GameLayout({ config }: GameLayoutProps) {
     state.isPaused,
     state.isGameOver,
     handleTogglePause,
-    handleDialogChange,
-    dialogState.isHelpOpen
+    handleToggleHelp
   ])
 
   // Sound Effects
@@ -191,7 +194,7 @@ export function GameLayout({ config }: GameLayoutProps) {
   useKeyboard(gameActions, {
     repeatDelay: 200,
     repeatInterval: 50,
-    enabled: !isAnyDialogOpen && !state.isGameOver
+    enabled: !state.isGameOver
   })
 
   const formatTime = (seconds: number) => {
