@@ -7,12 +7,12 @@ import { ComboDisplay } from '@/components/combo-display'
 import { PowerUpIndicator } from '@/components/power-up-indicator'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { hasCollision } from '@/lib/collision'
+import { adjustColor } from '@/lib/color'
 import { LinesClearedEffect } from '@/lib/effects'
 import { renderHelpers } from '@/lib/pieces'
 import { cn } from '@/lib/utils'
 import { GamePiece, GameState } from '@/types/game'
 import { PowerUp } from '@/types/power-ups'
-import { adjustColor } from '@/lib/color'
 
 // Animation variants
 const rowClearVariants = {
