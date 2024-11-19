@@ -1,6 +1,7 @@
 import { POWER_UPS } from '@/constants/power-ups'
 import { GamePiece, GameState, Position } from '@/types/game'
 import { ActivePowerUp, PowerUp, PowerUpType } from '@/types/power-ups'
+import { adjustColor } from '@/lib/color'
 
 interface PowerUpState {
   lastGenerated: number
@@ -128,7 +129,12 @@ export function createPowerUpPiece(type: PowerUpType): GamePiece {
       y: 0
     },
     rotation: 0,
-    powerUp
+    powerUp,
+    visuals: {
+      gradient: powerUp.visual.gradient,
+      glow: powerUp.visual.glow,
+      shadow: adjustColor(powerUp.visual.shadow, -40) // Darken the base color for shadow
+    }
   }
 }
 

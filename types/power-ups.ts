@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react'
-import { Position } from '@/types/game'
+import { BlockVisuals, Position } from '@/types/game'
 
 export enum PowerUpType {
   COLOR_BOMB = 'COLOR_BOMB',
@@ -13,6 +13,7 @@ export interface PowerUp {
   type: PowerUpType
   duration: number
   color: string
+  visual: BlockVisuals
   description: string
   icon: LucideIcon
 }
