@@ -107,7 +107,7 @@ export function GameOverDialog({
 
       // Create default gameStats if not provided
       const defaultGameStats = {
-        gameTime: timeLeft,
+        gameTime: Math.max(0, targetScore - timeLeft),
         moves: lines * 4, // Estimate based on lines cleared
         lineClears: Array(lines).fill(1),
         powerUpsUsed: []
