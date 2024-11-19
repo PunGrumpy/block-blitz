@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Medal, Trophy } from 'lucide-react'
+import { Medal, Shield, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { getLeaderboard } from '@/actions/leaderboard'
@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { AdminLeaderboard } from '@/components/admin-leader-board'
 
 interface LeaderboardEntry {
   id: string
@@ -29,26 +30,41 @@ export function LeaderBoard({ onClose }: LeaderBoardProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showAdmin, setShowAdmin] = useState(false)
+
+  const fetchLeaderboard = async () => {
+    try {
+      setIsLoading(true)
+      const data = await getLeaderboard()
+      setEntries(data)
+    } catch (error) {
+      setError('Failed to load leaderboard')
+      console.error('Leaderboard fetch error:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        setIsLoading(true)
-        const data = await getLeaderboard()
-        setEntries(data)
-      } catch (error) {
-        setError('Failed to load leaderboard')
-        console.error('Leaderboard fetch error:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
     fetchLeaderboard()
   }, [])
 
   return (
     <div className="mt-4 space-y-4">
-      <h3 className="text-xl font-semibold">Global Rankings</h3>
+      {/* Header with Admin Button */}
+      <div className="relative">
+        <h3 className="text-xl font-semibold">Global Rankings</h3>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowAdmin(true)}
+          className="absolute right-0 top-0"
+          aria-label="Admin settings"
+        >
+          <Shield className="size-4" />
+        </Button>
+      </div>
+
       <Separator />
 
       {error ? (
@@ -126,6 +142,15 @@ export function LeaderBoard({ onClose }: LeaderBoardProps) {
           Close
         </Button>
       </div>
+
+      {/* Admin Dialog */}
+      {showAdmin && (
+        <AdminLeaderboard
+          entries={entries}
+          onClose={() => setShowAdmin(false)}
+          onRefresh={fetchLeaderboard}
+        />
+      )}
     </div>
   )
 }
