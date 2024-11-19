@@ -104,13 +104,18 @@ export function GameOverDialog({
       setError('')
 
       const sanitizedName = playerName.trim().slice(0, 30)
-
-      // Create default gameStats if not provided
-      const defaultGameStats = {
-        gameTime: Math.max(0, targetScore - timeLeft),
-        moves: lines * 4, // Estimate based on lines cleared
-        lineClears: Array(lines).fill(1),
+      const defaultStats = {
+        gameTime: Math.max(0.1, targetScore - timeLeft),
+        moves: Math.max(1, lines * 4), // Estimate minimum moves based on lines
+        lineClears: Array.from({ length: lines }, (_, i) => i + 1),
         powerUpsUsed: []
+      }
+
+      const clientData = {
+        moves: Math.max(1, gameStats?.moves ?? defaultStats.moves),
+        gameTime: Math.max(0.1, gameStats?.gameTime ?? defaultStats.gameTime),
+        lineClears: gameStats?.lineClears ?? defaultStats.lineClears,
+        powerUpsUsed: gameStats?.powerUpsUsed ?? defaultStats.powerUpsUsed
       }
 
       const result = await submitScore({
@@ -118,10 +123,7 @@ export function GameOverDialog({
         score,
         level,
         lines,
-        clientData: {
-          ...defaultGameStats,
-          ...gameStats
-        }
+        clientData
       })
 
       if (!result.success) {
@@ -131,9 +133,9 @@ export function GameOverDialog({
       setHasSubmitted(true)
       setShowLeaderboard(true)
     } catch (error) {
-      setError(
+      const errorMessage =
         error instanceof Error ? error.message : 'Failed to submit score'
-      )
+      setError(errorMessage)
       console.error('Score submission error:', error)
     } finally {
       setIsSubmitting(false)
