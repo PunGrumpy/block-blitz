@@ -1,6 +1,16 @@
 'use client'
 
-import { Crown, HelpCircle, Pause, PlayIcon, Timer } from 'lucide-react'
+import {
+  Crown,
+  Ghost,
+  HelpCircle,
+  Minimize2,
+  Pause,
+  PlayIcon,
+  Shuffle,
+  Timer,
+  Zap
+} from 'lucide-react'
 import * as React from 'react'
 
 import { GameBoard } from '@/components/game-board'
@@ -339,44 +349,83 @@ export function GameLayout({ config }: GameLayoutProps) {
               </div>
             </Card>
 
-            <Card className="flex-1 p-4">
-              <h2 className="mb-2 font-mono font-medium">Controls</h2>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Move Left</span>
-                  <div className="flex space-x-1">
-                    <kbd className="rounded border px-2 font-mono">←</kbd>
-                    <span>or</span>
-                    <kbd className="rounded border px-2 font-mono">A</kbd>
+            <Card className="flex-1 space-y-4 p-4">
+              <div>
+                <h2 className="mb-2 font-mono font-medium">Controls</h2>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Move Left</span>
+                    <div className="flex space-x-1">
+                      <kbd className="rounded border px-2 font-mono">←</kbd>
+                      <span>or</span>
+                      <kbd className="rounded border px-2 font-mono">A</kbd>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Move Right</span>
+                    <div className="flex space-x-1">
+                      <kbd className="rounded border px-2 font-mono">→</kbd>
+                      <span>or</span>
+                      <kbd className="rounded border px-2 font-mono">D</kbd>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rotate</span>
+                    <div className="flex space-x-1">
+                      <kbd className="rounded border px-2 font-mono">↑</kbd>
+                      <span>or</span>
+                      <kbd className="rounded border px-2 font-mono">W</kbd>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Soft Drop</span>
+                    <div className="flex space-x-1">
+                      <kbd className="rounded border px-2 font-mono">↓</kbd>
+                      <span>or</span>
+                      <kbd className="rounded border px-2 font-mono">S</kbd>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Hard Drop</span>
+                    <kbd className="rounded border px-2 font-mono">Space</kbd>
                   </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Move Right</span>
-                  <div className="flex space-x-1">
-                    <kbd className="rounded border px-2 font-mono">→</kbd>
-                    <span>or</span>
-                    <kbd className="rounded border px-2 font-mono">D</kbd>
+              </div>
+              <div>
+                <h2 className="mb-2 font-mono font-medium">
+                  Special Power-ups
+                </h2>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Color Bomb</span>
+                    <div className="flex size-8 items-center justify-center rounded-md bg-red-500/20">
+                      <Zap className="size-5 text-red-500" />
+                    </div>
                   </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Rotate</span>
-                  <div className="flex space-x-1">
-                    <kbd className="rounded border px-2 font-mono">↑</kbd>
-                    <span>or</span>
-                    <kbd className="rounded border px-2 font-mono">W</kbd>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Line Blast</span>
+                    <div className="flex size-8 items-center justify-center rounded-md bg-yellow-500/20">
+                      <Minimize2 className="size-5 text-yellow-500" />
+                    </div>
                   </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Soft Drop</span>
-                  <div className="flex space-x-1">
-                    <kbd className="rounded border px-2 font-mono">↓</kbd>
-                    <span>or</span>
-                    <kbd className="rounded border px-2 font-mono">S</kbd>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Time Freeze</span>
+                    <div className="flex size-8 items-center justify-center rounded-md bg-blue-500/20">
+                      <Timer className="size-5 text-blue-500" />
+                    </div>
                   </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Hard Drop</span>
-                  <kbd className="rounded border px-2 font-mono">Space</kbd>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Ghost Block</span>
+                    <div className="flex size-8 items-center justify-center rounded-md bg-green-500/20">
+                      <Ghost className="size-5 text-green-500" />
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Shuffle</span>
+                    <div className="flex size-8 items-center justify-center rounded-md bg-purple-500/20">
+                      <Shuffle className="size-5 text-purple-500" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
