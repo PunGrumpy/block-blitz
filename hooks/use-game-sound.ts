@@ -7,11 +7,11 @@ interface SoundOptions {
 }
 
 const SOUND_EFFECTS = {
-  move: { frequency: 220, duration: 0.05 },
-  rotate: { frequency: 330, duration: 0.08 },
-  drop: { frequency: 440, duration: 0.15 },
-  clear: { frequency: 880, duration: 0.2 },
-  gameOver: { frequency: 110, duration: 0.5 }
+  move: { frequency: 220, duration: 0.05 }, // A3, short duration
+  rotate: { frequency: 330, duration: 0.08 }, // E4, short duration
+  drop: { frequency: 440, duration: 0.15 }, // A4, medium duration
+  clear: { frequency: 880, duration: 0.2 }, // A5, medium duration
+  gameOver: { frequency: 110, duration: 0.5 } // A2, long duration
 }
 
 // Minimum volume threshold to avoid Web Audio API errors
