@@ -27,6 +27,8 @@ import { DEFAULT_CONFIG } from '@/constants/game'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 
+import { LeaderBoard } from './leader-board'
+
 interface WelcomeScreenProps {
   onStart: () => void
   isOpen: boolean
@@ -37,6 +39,7 @@ interface DeviceContentProps {
   isMobile: boolean
   isTablet: boolean
   onStart: () => void
+  onViewLeaderboard: () => void
 }
 
 const containerVariants = {
@@ -72,7 +75,8 @@ function DeviceContent({
   isDesktop,
   isMobile,
   isTablet,
-  onStart
+  onStart,
+  onViewLeaderboard
 }: DeviceContentProps) {
   if (isDesktop) {
     return (
@@ -207,14 +211,23 @@ function DeviceContent({
 
         <motion.div
           variants={itemVariants}
-          className="flex flex-col items-center gap-3 sm:gap-4"
+          className="mx-auto flex max-w-60 flex-col items-center gap-3 sm:gap-4"
         >
           <Button
             size="lg"
-            className="h-10 gap-2 px-6 text-base sm:h-12 sm:px-8 sm:text-lg"
+            className="h-10 w-full gap-2 px-6 text-base sm:h-12 sm:px-8 sm:text-lg"
             onClick={onStart}
           >
             Start Game
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-10 gap-2 px-6 text-base sm:h-12 sm:px-8 sm:text-lg"
+            onClick={onViewLeaderboard}
+          >
+            <Trophy className="size-4" />
+            View Leaderboard
           </Button>
           <p className="text-xs text-muted-foreground sm:text-sm">
             Press{' '}
@@ -312,7 +325,7 @@ function DeviceContent({
 
       <motion.div
         variants={itemVariants}
-        className="flex flex-col items-center gap-3"
+        className="flex w-full flex-col items-center gap-3"
       >
         <Button
           size="lg"
@@ -323,6 +336,15 @@ function DeviceContent({
           onClick={onStart}
         >
           Start Game
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          className="h-10 w-full gap-2 px-6 text-base sm:h-12 sm:px-8 sm:text-lg"
+          onClick={onViewLeaderboard}
+        >
+          <Trophy className="size-4" />
+          View Leaderboard
         </Button>
         <p className="text-center text-xs text-muted-foreground">
           {isMobile
@@ -338,6 +360,16 @@ export default function WelcomeScreen({ onStart, isOpen }: WelcomeScreenProps) {
   const isMobile = useMediaQuery('(max-width: 640px)')
   const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)')
   const isDesktop = !isMobile && !isTablet
+
+  const [showLeaderboard, setShowLeaderboard] = React.useState(false)
+
+  const handleViewLeaderboard = () => {
+    setShowLeaderboard(true)
+  }
+
+  const handleCloseLeaderboard = () => {
+    setShowLeaderboard(false)
+  }
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -366,7 +398,15 @@ export default function WelcomeScreen({ onStart, isOpen }: WelcomeScreenProps) {
           isMobile={isMobile}
           isTablet={isTablet}
           onStart={onStart}
+          onViewLeaderboard={handleViewLeaderboard}
         />
+        {showLeaderboard && (
+          <Dialog open={showLeaderboard} onOpenChange={setShowLeaderboard}>
+            <DialogContent>
+              <LeaderBoard onClose={handleCloseLeaderboard} />
+            </DialogContent>
+          </Dialog>
+        )}
       </DialogContent>
     </Dialog>
   )

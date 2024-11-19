@@ -1,7 +1,7 @@
 import { POWER_UPS } from '@/constants/power-ups'
+import { adjustColor } from '@/lib/color'
 import { GamePiece, GameState, Position } from '@/types/game'
 import { ActivePowerUp, PowerUp, PowerUpType } from '@/types/power-ups'
-import { adjustColor } from '@/lib/color'
 
 interface PowerUpState {
   lastGenerated: number
