@@ -10,6 +10,7 @@ A modern take on classic block-falling puzzle games, built with Next.js and Type
 - 🎨 5 unique block types with distinctive colors
 - ⚡️ Special power-ups and combo system
 - 🏆 Global leaderboard
+- 🛡️ Admin leaderboard management
 - 🎵 Dynamic sound effects
 - 📱 Responsive design with touch controls
 - 🌙 Dark/Light mode support
@@ -39,6 +40,9 @@ pnpm install
 # Start development server
 pnpm dev
 ```
+
+> [!NOTE]
+> Let's find environment variables with youself.
 
 ## Game Controls 🎮
 
