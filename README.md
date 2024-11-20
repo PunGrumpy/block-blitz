@@ -140,22 +140,22 @@ pnpm start
 
 ### Code References
 
-- Game loop implementation inspired by the Canvas API Best Practices Guide
-- Collision detection algorithm adapted from MDN Web Docs examples
-- Sound system utilizing Web Audio API documentation examples
+- Game loop implementation inspired by the [Canvas API Best Practices Guide](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Basic_animations)
+- Collision detection algorithm adapted from [MDN Web Docs examples](https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection)
+- Sound system utilizing [Web Audio API documentation examples](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
 
 ### External Libraries
 
-- NextJS 15
-- Tailwind CSS
-- Framer Motion
-- Radix UI
-- Upstash Redis
+- [NextJS 15](https://nextjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Framer Motion](https://motion.dev/)
+- [Radix UI](https://radix-ui.com/)
+- [Upstash Redis](https://upstash.com/)
 
 ### Assets
 
-- Font: Geist from Vercel (Open Source)
-- Sound effects: Custom generated using Web Audio API
+- Font: Geist from [Google Fonts](https://fonts.google.com/specimen/Geist)
+- Sound effects: Custom generated using [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
 - Color scheme: Custom designed for accessibility
 
 ## 👥 Development Team
