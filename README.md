@@ -2,16 +2,39 @@
 
 A modern take on classic block-falling puzzle games, built with Next.js and TypeScript.
 
-![Block Blitz](/public/preview.png)
+> [!NOTE]
+> This project was developed as part of the Computer Games Programming course exit examination. Any similarity to existing games is for educational purposes only.
+
+![Block Blitz Game Preview](/public/preview.png)
+
+## Game Mechanics 🎯
+
+### Board & Blocks
+
+- Game board: 10x20 grid
+- Features 5 unique block types:
+  - Line Block (I) - Long piece for clearing multiple rows
+  - Square Block (O) - 2x2 block that doesn't rotate
+  - T Block (T) - T-shaped piece for versatile placements
+  - L Block (L) - L-shaped piece
+  - Reverse L Block (J) - Mirrored L-shaped piece
+
+### Core Rules
+
+- Blocks can be cleared by:
+  - Completing full rows
+  - Matching 3+ blocks of the same color
+- Blocks automatically fall to fill empty spaces
+- Win condition: Score 3,000 points within 180 seconds (Time-Based Mode)
+- Alternative mode: Limited blocks with target score (Object-Available-Based Mode)
 
 ## Features ✨
 
 - 🎯 Classic block-falling gameplay with modern mechanics
-- 🎨 5 unique block types with distinctive colors
+- 🎨 Color-coded blocks with distinctive visuals
 - ⚡️ Special power-ups and combo system
-- 🏆 Global leaderboard
-- 🛡️ Admin leaderboard management
-- 🎵 Dynamic sound effects
+- 🏆 Global leaderboard with score verification
+- 🎵 Dynamic sound effects and visual feedback
 - 📱 Responsive design with touch controls
 - 🌙 Dark/Light mode support
 
@@ -24,6 +47,8 @@ A modern take on classic block-falling puzzle games, built with Next.js and Type
 
 - 📦 Node.js 20+
 - 🔧 npm/yarn/pnpm
+- 🌐 Modern web browser
+- 🖥️ Minimum screen resolution: 800x600
 
 ### Installation
 
@@ -46,26 +71,26 @@ pnpm dev
 
 ## 🎮 Game Controls
 
-### Desktop
+### Desktop (Keyboard)
 
 - `⬅️` Arrow Left / `A`: Move left
 - `➡️` Arrow Right / `D`: Move right
-- `⬆️` Arrow Up / `W`: Rotate piece
+- `⬆️` Arrow Up / `W`: Rotate piece clockwise
 - `⬇️` Arrow Down / `S`: Soft drop
 - `Space`: Hard drop
 - `P`: Pause game
 - `ESC`: Return to menu
 
-### Mobile/Tablet
+### Mobile/Tablet (Touch)
 
-- 👆 Tap side buttons to move
+- 👆 Tap left/right buttons to move
 - 🔄 Tap rotate button to turn piece
 - ⬇️ Swipe down for soft drop
 - 👇 Double tap for hard drop
 
-## 🛠️ Development
+## 🛠️ Technology Stack
 
-### Tech Stack
+### Core Technologies
 
 - ⚛️ Next.js 15 (App Router)
 - 📘 TypeScript
@@ -74,7 +99,12 @@ pnpm dev
 - 🔊 Web Audio API
 - 💾 Upstash Redis (Leaderboard)
 
-### Project Structure
+### UI Components
+
+- 🔧 Radix UI primitives
+- 📱 Responsive design system
+
+## Project Structure
 
 ```
 .
@@ -87,6 +117,8 @@ pnpm dev
 └── constants/    # Game constants
 ```
 
+## 🏗️ Development
+
 ### Building for Production
 
 ```bash
@@ -97,15 +129,42 @@ pnpm build
 pnpm start
 ```
 
-## 📝 References
+### Performance Optimizations
 
-- [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
-- [Upstash Redis](https://docs.upstash.com/)
-- [Next.js](https://nextjs.org/docs)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [Framer Motion](https://www.framer.com/api/motion/)
-- [TypeScript](https://www.typescriptlang.org/docs/)
-- [pnpm](https://pnpm.io/docs)
+- RequestAnimationFrame for smooth game loop
+- Canvas optimization for block rendering
+- Efficient collision detection
+- Web Workers for physics calculations
+- Code splitting and dynamic imports
+
+## 📝 References & Attributions
+
+### Code References
+
+- Game loop implementation inspired by the Canvas API Best Practices Guide
+- Collision detection algorithm adapted from MDN Web Docs examples
+- Sound system utilizing Web Audio API documentation examples
+
+### External Libraries
+
+- NextJS 15
+- Tailwind CSS
+- Framer Motion
+- Radix UI
+- Upstash Redis
+
+### Assets
+
+- Font: Geist from Vercel (Open Source)
+- Sound effects: Custom generated using Web Audio API
+- Color scheme: Custom designed for accessibility
+
+## 👥 Development Team
+
+- Developer: Noppakorn Kaewsalabnil
+- Course: Exit Exam on Computer Games Programming
+- Institution: King Mongkut's Institute of Technology Ladkrabang
+- Academic Year: 1/2567
 
 ## 📄 License
 
