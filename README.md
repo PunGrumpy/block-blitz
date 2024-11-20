@@ -22,8 +22,7 @@ A modern take on classic block-falling puzzle games, built with Next.js and Type
 ### Core Rules
 
 - Blocks can be cleared by:
-  - Completing full rows
-  - Matching 3+ blocks of the same color
+  - Completing full rows (line clear like Tetris)
 - Blocks automatically fall to fill empty spaces
 - Win condition: Score 3,000 points within 180 seconds (Time-Based Mode)
 - Alternative mode: Limited blocks with target score (Object-Available-Based Mode)
