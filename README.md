@@ -24,8 +24,7 @@ A modern take on classic block-falling puzzle games, built with Next.js and Type
 - Blocks can be cleared by:
   - Completing full rows (line clear like Tetris)
 - Blocks automatically fall to fill empty spaces
-- Win condition: Score 3,000 points within 180 seconds (Time-Based Mode)
-- Alternative mode: Limited blocks with target score (Object-Available-Based Mode)
+- Win condition: Score 3,000 points within 180 seconds (Time-Based Mode) but can play until time's up
 
 ## Features ✨
 
