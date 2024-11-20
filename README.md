@@ -163,10 +163,10 @@ pnpm start
 
 ## 👥 Development Team
 
-- Developer: Noppakorn Kaewsalabnil
-- Course: Exit Exam on Computer Games Programming
-- Institution: King Mongkut's Institute of Technology Ladkrabang
-- Academic Year: 1/2567
+- Developer: **Noppakorn Kaewsalabnil**
+- Course: **Exit Exam on Computer Games Programming**
+- Institution: **King Mongkut's Institute of Technology Ladkrabang**
+- Academic Year: **1/2567** (2024)
 
 ## 📄 License
 
