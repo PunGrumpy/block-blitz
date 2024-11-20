@@ -1,6 +1,6 @@
 'use client'
 
-import { RotateCcw, Trophy } from 'lucide-react'
+import { AlertCircle, RotateCcw, Trophy } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { submitScore } from '@/actions/leaderboard'
@@ -225,8 +225,56 @@ export function GameOverDialog({
                     animate="visible"
                     exit="hidden"
                   >
+                    {/* Score Target Not Reached Alert */}
+                    {!hasWon && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="relative space-y-4 overflow-hidden rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+                        role="alert"
+                        aria-live="polite"
+                      >
+                        <div className="flex items-start gap-3 brightness-150">
+                          <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-medium text-destructive">
+                              Score Target Not Reached
+                            </h4>
+                            <p className="text-xs text-destructive/80">
+                              Score {targetScore.toLocaleString()} points or
+                              more to submit your score to the leaderboard!
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 brightness-150">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="flex items-center text-destructive/80">
+                              Progress
+                            </span>
+                            <span className="font-medium tabular-nums text-destructive">
+                              {score.toLocaleString()} /{' '}
+                              {targetScore.toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div className="relative h-2 overflow-hidden rounded-full bg-destructive/20 brightness-125">
+                            <motion.div
+                              className="absolute inset-y-0 left-0 bg-destructive"
+                              initial={{ width: 0 }}
+                              animate={{
+                                width: `${Math.min(100, (score / targetScore) * 100)}%`
+                              }}
+                              transition={{ duration: 0.5, ease: 'easeOut' }}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* Score Submission Form */}
-                    {!hasSubmitted && (
+                    {!hasSubmitted && hasWon && (
                       <div className="space-y-4 rounded-lg border p-4">
                         <h3 className="text-sm font-medium">
                           Submit Your Score
