@@ -1,6 +1,6 @@
 {
-  "name": "color-match-cascade",
-  "version": "0.1.0",
+  "name": "block-blitz",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "build": "next build",
