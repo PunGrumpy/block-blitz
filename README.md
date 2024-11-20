@@ -160,7 +160,7 @@ pnpm start
 - Font: Geist from [Google Fonts](https://fonts.google.com/specimen/Geist)
 - Sound effects: Custom generated using [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
 - Color scheme: Custom designed for accessibility
-- Logo & branding: Custom designed in Figma with font in Kode Mono from [Google Fonts](https://fonts.google.com/specimen/Kode+Mono)
+- Logo & branding: Custom designed in [Figma](https://www.figma.com) with font in Kode Mono from [Google Fonts](https://fonts.google.com/specimen/Kode+Mono)
 
 ## 👥 Development Team
 
