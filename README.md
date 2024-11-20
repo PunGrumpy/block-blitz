@@ -40,6 +40,9 @@ A modern take on classic block-falling puzzle games, built with Next.js and Type
 > [!NOTE]
 > Switch to light mode is coming soon!
 
+> [!TIP]
+> Admin can use secret password to access admin dashboard to delete data in leaderboard.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
