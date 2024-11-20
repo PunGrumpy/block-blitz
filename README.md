@@ -2,8 +2,8 @@
 
 A modern take on classic block-falling puzzle games, built with Next.js and TypeScript.
 
-> [!NOTE]
-> This project was developed as part of the Computer Games Programming course exit examination. Any similarity to existing games is for educational purposes only.
+> [!WARNING]
+> This project was developed as part of the Computer Games Programming course exit examination.
 
 ![Block Blitz Game Preview](/public/preview.png)
 
