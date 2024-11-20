@@ -1,4 +1,4 @@
-# Block Blitz 🎮
+# 🎮 Block Blitz
 
 A modern take on classic block-falling puzzle games, built with Next.js and TypeScript.
 
@@ -18,12 +18,12 @@ A modern take on classic block-falling puzzle games, built with Next.js and Type
 > [!NOTE]
 > Switch to light mode is coming soon!
 
-## Getting Started 🚀
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 20+ 📦
-- npm/yarn/pnpm 🔧
+- 📦 Node.js 20+
+- 🔧 npm/yarn/pnpm
 
 ### Installation
 
@@ -44,7 +44,7 @@ pnpm dev
 > [!NOTE]
 > Let's find environment variables with youself.
 
-## Game Controls 🎮
+## 🎮 Game Controls
 
 ### Desktop
 
@@ -63,7 +63,7 @@ pnpm dev
 - ⬇️ Swipe down for soft drop
 - 👇 Double tap for hard drop
 
-## Development 🛠️
+## 🛠️ Development
 
 ### Tech Stack
 
@@ -97,16 +97,16 @@ pnpm build
 pnpm start
 ```
 
-## Contributing 🤝
+## 📝 References
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
+- [Upstash Redis](https://docs.upstash.com/)
+- [Next.js](https://nextjs.org/docs)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [Framer Motion](https://www.framer.com/api/motion/)
+- [TypeScript](https://www.typescriptlang.org/docs/)
+- [pnpm](https://pnpm.io/docs)
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License 📄
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
