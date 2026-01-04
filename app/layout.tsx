@@ -32,7 +32,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://blockblitz.pungrumpy.com/'),
+  metadataBase: new URL('https://blockblitz.vercel.app/'),
   title: 'Block Blitz - Modern Puzzle Game',
   description: 'A modern take on classic block-falling puzzle games',
   keywords: ['puzzle game', 'block game', 'tetris-like', 'web game'],
